@@ -352,6 +352,9 @@ function renderIndividual(report) {
   `;
 }
 
+let overviewPage = 0;
+const PAGE_SIZE = 10;
+
 async function loadOverview() {
   const adminKey = state.course?.settings?.AdminKey;
   if (!adminKey) {
@@ -363,11 +366,18 @@ async function loadOverview() {
     els.overviewReport.innerHTML = '<p class="empty-msg">ยังไม่มีข้อมูลผู้เรียน</p>';
     return;
   }
+  overviewPage = 0;
   renderOverview(result.overview);
 }
 
 function renderOverview(overview) {
-  const rows = overview.summaries.map(item => {
+  const total = overview.summaries.length;
+  const totalPages = Math.ceil(total / PAGE_SIZE) || 1;
+  if (overviewPage >= totalPages) overviewPage = totalPages - 1;
+  const start = overviewPage * PAGE_SIZE;
+  const pageItems = overview.summaries.slice(start, start + PAGE_SIZE);
+
+  const rows = pageItems.map(item => {
     const imp = calcImprovement(item.pre, item.post);
     const impStr = imp.diff !== null ? `${imp.diff >= 0 ? '+' : ''}${imp.diff}` : '-';
     return `
@@ -380,6 +390,11 @@ function renderOverview(overview) {
       <td class="status">${item.post ? (String(item.post.Passed) === 'true' ? '&#x2705; ผ่าน' : '&#x274C; ไม่ผ่าน') : '-'}</td>
     </tr>`;
   }).join('');
+
+  const pageInfo = `<span style="font-size:13px;color:var(--muted)">แสดง ${start + 1}-${Math.min(start + PAGE_SIZE, total)} จาก ${total} คน</span>`;
+  const prevDisabled = overviewPage <= 0 ? 'disabled' : '';
+  const nextDisabled = overviewPage >= totalPages - 1 ? 'disabled' : '';
+
   els.overviewReport.innerHTML = `
     <div class="metrics">
       <div class="metric metric-blue">
@@ -408,8 +423,21 @@ function renderOverview(overview) {
         <thead><tr><th>ชื่อ</th><th>ศกร.</th><th>ก่อนเรียน</th><th>หลังเรียน</th><th>พัฒนา</th><th>สถานะ</th></tr></thead>
         <tbody>${rows}</tbody>
       </table>
+      <div class="pagination">
+        <button class="pagination-btn" data-page="prev" ${prevDisabled}>&#x25C0; ก่อนหน้า</button>
+        ${pageInfo}
+        <button class="pagination-btn" data-page="next" ${nextDisabled}>ถัดไป &#x25B6;</button>
+      </div>
     </div>
   `;
+  els.overviewReport.querySelectorAll('.pagination-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      if (btn.dataset.page === 'prev' && overviewPage > 0) overviewPage--;
+      else if (btn.dataset.page === 'next' && overviewPage < totalPages - 1) overviewPage++;
+      else return;
+      renderOverview(overview);
+    });
+  });
 }
 
 function percent(result) {
