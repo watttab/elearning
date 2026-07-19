@@ -40,6 +40,8 @@ function cacheEls() {
   els.homeBtn = document.getElementById('homeBtn');
   els.restartBtn = document.getElementById('restartBtn');
   els.exitBtn = document.getElementById('exitBtn');
+  els.exportPdfBtn = document.getElementById('exportPdfBtn');
+  els.exportOverviewPdfBtn = document.getElementById('exportOverviewPdfBtn');
   els.adminBtn = document.getElementById('adminBtn');
   els.adminCloseBtn = document.getElementById('adminCloseBtn');
   els.adminSaveBtn = document.getElementById('adminSaveBtn');
@@ -64,6 +66,8 @@ function bindEvents() {
   els.homeBtn.addEventListener('click', goHome);
   els.restartBtn.addEventListener('click', restartLearning);
   els.exitBtn.addEventListener('click', exitLearning);
+  els.exportPdfBtn.addEventListener('click', exportPdf);
+  els.exportOverviewPdfBtn.addEventListener('click', exportOverviewPdf);
   els.adminBtn.addEventListener('click', openAdmin);
   els.adminCloseBtn.addEventListener('click', closeAdmin);
   els.adminSaveBtn.addEventListener('click', saveAllData);
@@ -419,9 +423,29 @@ function exitLearning() {
   renderCourseInfo();
 }
 
+async function exportPdf() {
+  if (!state.learner) { toast('ไม่มีข้อมูลผู้เรียน'); return; }
+  await withButtonLoading(els.exportPdfBtn, 'กำลังสร้าง PDF...', async () => {
+    const res = await api('exportPdf', { type: 'individual', learnerId: state.learner.learnerId });
+    if (res && res.ok && res.url) window.open(res.url, '_blank');
+    else toast('สร้าง PDF ไม่สำเร็จ');
+  });
+}
+
+async function exportOverviewPdf() {
+  const key = state.course?.settings?.AdminKey;
+  if (!key) { toast('ไม่พบ AdminKey'); return; }
+  await withButtonLoading(els.exportOverviewPdfBtn, 'กำลังสร้าง PDF...', async () => {
+    const res = await api('exportPdf', { type: 'overview', adminKey: key });
+    if (res && res.ok && res.url) window.open(res.url, '_blank');
+    else toast('สร้าง PDF ไม่สำเร็จ');
+  });
+}
+
 /* === Admin Panel === */
 let adminData = null;
 let adminPassword = '';
+let dragDropReady = false;
 
 async function openAdmin() {
   if (!state.course?.settings?.AdminKey) {
@@ -447,6 +471,12 @@ async function openAdmin() {
   adminPassword = pw;
   if (!adminData) adminData = JSON.parse(JSON.stringify(state.course));
   renderAdminTabs();
+  if (!dragDropReady) {
+    setupDragDrop(els.adminLessons, adminData.lessons);
+    setupDragDrop(els.adminContents, adminData.contents);
+    setupDragDrop(els.adminQuestions, adminData.questions);
+    dragDropReady = true;
+  }
   document.querySelectorAll('.step').forEach(el => el.classList.remove('active'));
   document.getElementById('step8').classList.add('active');
   switchAdminTab('settings');
@@ -516,7 +546,8 @@ function renderAdminSettings() {
 function renderAdminLessons() {
   const lessons = adminData.lessons || [];
   els.adminLessons.innerHTML = lessons.map((l, i) => `
-    <div class="admin-item">
+    <div class="admin-item" draggable="true" data-idx="${i}">
+      <div class="drag-handle">&#x2630;</div>
       <div class="field"><label>ชื่อบทเรียน</label><input class="ad-lesson-title" value="${escapeAttr(l.Title)}"></div>
       <div class="field"><label>คำอธิบาย</label><input class="ad-lesson-desc" value="${escapeAttr(l.Description || '')}"></div>
       <div class="field"><label>URL ปก</label><input class="ad-lesson-cover" value="${escapeAttr(l.CoverImageUrl || '')}"></div>
@@ -536,7 +567,8 @@ function renderAdminLessons() {
 function renderAdminContents() {
   const contents = adminData.contents || [];
   els.adminContents.innerHTML = contents.map((c, i) => `
-    <div class="admin-item">
+    <div class="admin-item" draggable="true" data-idx="${i}">
+      <div class="drag-handle">&#x2630;</div>
       <div class="field"><label>ชื่อเนื้อหา</label><input class="ad-cont-title" value="${escapeAttr(c.Title)}"></div>
       <div class="field"><label>ประเภท</label>
         <select class="ad-cont-type">
@@ -561,7 +593,8 @@ function renderAdminContents() {
 function renderAdminQuestions() {
   const questions = adminData.questions || [];
   els.adminQuestions.innerHTML = questions.map((q, i) => `
-    <div class="admin-item">
+    <div class="admin-item" draggable="true" data-idx="${i}">
+      <div class="drag-handle">&#x2630;</div>
       <div class="field"><label>คำถาม</label><input class="ad-q-text" value="${escapeAttr(q.Question)}"></div>
       <div class="field"><label>ประเภท</label>
         <select class="ad-q-type">
@@ -579,6 +612,40 @@ function renderAdminQuestions() {
   document.getElementById('adAddQuestion')?.addEventListener('click', () => {
     adminData.questions.push({ QuestionID: 'Q' + Date.now(), QuizType: 'pre', Question: '', Choices: ['ตัวเลือก1','ตัวเลือก2'], Points: 1 });
     renderAdminQuestions();
+  });
+}
+
+function setupDragDrop(container, array) {
+  let dragSrcIdx = null;
+  container.addEventListener('dragstart', e => {
+    const item = e.target.closest('.admin-item');
+    if (!item) return;
+    dragSrcIdx = parseInt(item.dataset.idx);
+    item.classList.add('dragging');
+  });
+  container.addEventListener('dragover', e => {
+    const item = e.target.closest('.admin-item');
+    if (!item || dragSrcIdx === null) return;
+    e.preventDefault();
+    container.querySelectorAll('.admin-item').forEach(el => el.classList.remove('drag-over'));
+    item.classList.add('drag-over');
+  });
+  container.addEventListener('drop', e => {
+    const item = e.target.closest('.admin-item');
+    if (!item || dragSrcIdx === null) return;
+    e.preventDefault();
+    const targetIdx = parseInt(item.dataset.idx);
+    if (dragSrcIdx === targetIdx) return;
+    const [moved] = array.splice(dragSrcIdx, 1);
+    array.splice(targetIdx, 0, moved);
+    dragSrcIdx = null;
+    if (container === els.adminLessons) renderAdminLessons();
+    else if (container === els.adminContents) renderAdminContents();
+    else if (container === els.adminQuestions) renderAdminQuestions();
+  });
+  container.addEventListener('dragend', () => {
+    dragSrcIdx = null;
+    container.querySelectorAll('.admin-item').forEach(el => el.classList.remove('dragging', 'drag-over'));
   });
 }
 
