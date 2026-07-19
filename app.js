@@ -85,12 +85,8 @@ function renderCourseInfo() {
 }
 
 function applyTheme() {
-  const saved = localStorage.getItem('microTheme');
-  const theme = saved || state.course?.settings?.Theme || 'indigo';
+  const theme = state.course?.settings?.Theme || 'indigo';
   document.body.className = 'theme-' + theme;
-  if (!saved && state.course?.settings?.Theme) {
-    localStorage.setItem('microTheme', state.course.settings.Theme);
-  }
 }
 
 function goToStep(n) {
@@ -507,7 +503,6 @@ function renderAdminSettings() {
       els.adminSettings.querySelectorAll('.theme-btn').forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
       adminData.settings.Theme = btn.dataset.theme;
-      localStorage.setItem('microTheme', btn.dataset.theme);
       document.body.className = 'theme-' + btn.dataset.theme;
     });
   });
@@ -631,7 +626,7 @@ async function saveAllData() {
     applyTheme();
     await alertBox('&#x2705; บันทึกสำเร็จ', 'ข้อมูลทั้งหมดอัปเดตแล้ว', 'success');
   } catch (e) {
-    await alertBox('&#x274C; ไม่สำเร็จ', e.message || 'ลองใหม่อีกครั้ง', 'error');
+    toast('❌ ' + (e.message || 'บันทึกไม่สำเร็จ ลองใหม่อีกครั้ง'));
   } finally {
     els.adminSaveBtn.disabled = false;
     els.adminSaveBtn.textContent = '&#x1F4BE; บันทึกข้อมูลทั้งหมด';
