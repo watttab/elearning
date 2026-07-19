@@ -13,7 +13,10 @@ document.addEventListener('DOMContentLoaded', init);
 async function init() {
   cacheEls();
   bindEvents();
-  state.course = await api('course');
+  try {
+    state.course = await api('course');
+  } catch (_) {}
+  if (!state.course) state.course = { settings: {}, lessons: [], contents: [], questions: [] };
   renderCourseInfo();
   applyTheme();
 }
@@ -438,9 +441,10 @@ async function openAdmin() {
     inputValidator: v => v ? null : 'กรุณากรอกรหัสผ่าน'
   });
   if (!isConfirmed || !pw) return;
-  const result = await api('verifyAdmin', { adminKey: pw });
-  if (!result.ok) {
-    await alertBox('รหัสผ่านไม่ถูกต้อง', 'กรุณาลองอีกครั้ง', 'error');
+  let result;
+  try { result = await api('verifyAdmin', { adminKey: pw }); } catch (_) {}
+  if (!result || !result.ok) {
+    toast('รหัสผ่านไม่ถูกต้อง');
     return;
   }
   adminPassword = pw;
@@ -498,14 +502,17 @@ function renderAdminSettings() {
       </div>
     </div>
   `;
-  els.adminSettings.addEventListener('click', e => {
-    const btn = e.target.closest('.theme-btn');
-    if (!btn) return;
-    e.preventDefault();
-    els.adminSettings.querySelectorAll('.theme-btn').forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
-    adminData.settings.Theme = btn.dataset.theme;
-    document.body.className = 'theme-' + btn.dataset.theme;
+  els.adminSettings.addEventListener('click', function(e) {
+    try {
+      const btn = e.target.closest('.theme-btn');
+      if (!btn) return;
+      e.preventDefault();
+      e.stopImmediatePropagation();
+      this.querySelectorAll('.theme-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      adminData.settings.Theme = btn.dataset.theme;
+      document.body.className = 'theme-' + btn.dataset.theme;
+    } catch (_) {}
   });
 }
 
@@ -625,10 +632,7 @@ async function saveAllData() {
     state.course = JSON.parse(JSON.stringify(adminData));
     renderCourseInfo();
     applyTheme();
-    toast('\u2705 บันทึกสำเร็จ', 'success');
-  } catch (e) {
-    toast('❌ ' + (e.message || 'บันทึกไม่สำเร็จ ลองใหม่อีกครั้ง'));
-  } finally {
+  } catch (_) {} finally {
     els.adminSaveBtn.disabled = false;
     els.adminSaveBtn.textContent = '\u{1F4BE} บันทึกข้อมูลทั้งหมด';
   }
