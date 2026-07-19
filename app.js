@@ -498,13 +498,13 @@ function renderAdminSettings() {
       </div>
     </div>
   `;
-  els.adminSettings.querySelectorAll('.theme-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-      els.adminSettings.querySelectorAll('.theme-btn').forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-      adminData.settings.Theme = btn.dataset.theme;
-      document.body.className = 'theme-' + btn.dataset.theme;
-    });
+  els.adminSettings.addEventListener('click', e => {
+    const btn = e.target.closest('.theme-btn');
+    if (!btn) return;
+    els.adminSettings.querySelectorAll('.theme-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    adminData.settings.Theme = btn.dataset.theme;
+    document.body.className = 'theme-' + btn.dataset.theme;
   });
 }
 
@@ -664,9 +664,9 @@ function youtubeId(url) {
   return match ? match[1] : '';
 }
 
-function toast(message) {
+function toast(message, icon = 'info') {
   if (window.Swal) {
-    Swal.fire({ toast: true, position: 'top-end', icon: 'info', title: message, showConfirmButton: false, timer: 2400, timerProgressBar: true });
+    Swal.fire({ toast: true, position: 'top-end', icon, title: message, showConfirmButton: false, timer: 2600, timerProgressBar: true });
     return;
   }
   els.toast.textContent = message;
