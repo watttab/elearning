@@ -508,7 +508,11 @@ async function openAdmin() {
     return;
   }
   adminPassword = pw;
-  if (!adminData) adminData = JSON.parse(JSON.stringify(state.course));
+  if (!adminData) {
+    const full = await api('loadAdminData', { adminKey: pw });
+    if (full && full.ok) adminData = full;
+    else adminData = JSON.parse(JSON.stringify(state.course));
+  }
   renderAdminTabs();
   if (!dragDropReady) {
     setupDragDrop(els.adminLessons, adminData.lessons);
@@ -641,6 +645,7 @@ function renderAdminQuestions() {
         </select>
       </div>
       <div class="field"><label>ตัวเลือก (คั่นด้วย | )</label><input class="ad-q-choices" value="${escapeAttr((q.Choices || []).join(' | '))}"></div>
+      <div class="field"><label>คำตอบที่ถูกต้อง</label><input class="ad-q-answer" value="${escapeAttr(q.CorrectAnswer || '')}"></div>
       <button class="btn-outline ad-del" data-idx="${i}">&#x1F5D1; ลบ</button>
     </div>
   `).join('') + '<button id="adAddQuestion" class="btn-outline">&#x2795; เพิ่มคำถาม</button>';
@@ -649,7 +654,7 @@ function renderAdminQuestions() {
     renderAdminQuestions();
   }));
   document.getElementById('adAddQuestion')?.addEventListener('click', () => {
-    adminData.questions.push({ QuestionID: 'Q' + Date.now(), QuizType: 'pre', Question: '', Choices: ['ตัวเลือก1','ตัวเลือก2'], Points: 1 });
+    adminData.questions.push({ QuestionID: 'Q' + Date.now(), QuizType: 'pre', Question: '', Choices: ['ตัวเลือก1','ตัวเลือก2'], CorrectAnswer: '', Points: 1 });
     renderAdminQuestions();
   });
 }
@@ -720,6 +725,7 @@ function collectAdminData() {
     q.Question = item.querySelector('.ad-q-text')?.value || q.Question;
     q.QuizType = item.querySelector('.ad-q-type')?.value || q.QuizType;
     q.Choices = (item.querySelector('.ad-q-choices')?.value || '').split('|').map(s => s.trim()).filter(Boolean);
+    q.CorrectAnswer = item.querySelector('.ad-q-answer')?.value || '';
   });
 }
 

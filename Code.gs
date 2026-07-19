@@ -108,6 +108,7 @@ function route_(action, payload, params) {
   if (action === 'report') return getReport_(payload, params);
   if (action === 'exportPdf') return exportPdf_(payload, params);
   if (action === 'verifyAdmin') return verifyAdmin_(payload);
+  if (action === 'loadAdminData') return loadAdminData_(payload, params);
   if (action === 'saveAll') return saveAll_(payload);
   throw new Error('Unknown action: ' + action);
 }
@@ -464,6 +465,20 @@ function verifyAdmin_(payload) {
   return { ok: adminKey === String(settings.AdminKey) };
 }
 
+function loadAdminData_(payload, params) {
+  const adminKey = String(payload.adminKey || params.adminKey || '');
+  const settings = settings_();
+  if (adminKey !== String(settings.AdminKey)) throw new Error('Invalid AdminKey');
+  const questions = records_(SHEETS.QUESTIONS).filter(active_).sort(bySort_).map((q) => ({
+    QuestionID: q.QuestionID, QuizType: q.QuizType, LessonID: q.LessonID,
+    Question: q.Question, Choices: splitChoices_(q.Choices),
+    CorrectAnswer: q.CorrectAnswer || '',
+    Points: Number(q.Points || 1), Explanation: q.Explanation || '',
+    SortOrder: Number(q.SortOrder || 0), IsActive: true
+  }));
+  return { ok: true, settings, lessons: records_(SHEETS.LESSONS).filter(active_).sort(bySort_), contents: records_(SHEETS.CONTENTS).filter(active_).sort(bySort_), questions };
+}
+
 function saveAll_(payload) {
   const data = payload.data;
   const adminKey = payload.adminKey;
@@ -499,7 +514,7 @@ function saveAll_(payload) {
     return [
       q.QuestionID || 'Q' + Utilities.getUuid().slice(0, 8).toUpperCase(),
       q.QuizType || 'pre', q.LessonID || '', q.Question || '',
-      choices, '', q.Points || 1, '', i + 1, true
+      choices, q.CorrectAnswer || '', q.Points || 1, q.Explanation || '', i + 1, true
     ];
   });
   return { ok: true, message: 'บันทึกข้อมูลทั้งหมดสำเร็จ' };
