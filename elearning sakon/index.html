@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="th">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Micro Learning Template</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  </head>
+  <body>
+    <header class="topbar">
+      <div>
+        <p class="eyebrow">Micro Learning</p>
+        <h1 id="courseTitle">ชุดการเรียนรู้ออนไลน์</h1>
+      </div>
+      <nav class="top-actions" aria-label="เมนูหลัก">
+        <button class="icon-button" data-view="learn" title="บทเรียน">⌂</button>
+        <button class="icon-button" data-view="report" title="รายงานของฉัน">▣</button>
+        <button class="icon-button" data-view="admin" title="รายงานภาพรวม">≡</button>
+      </nav>
+    </header>
+
+    <main>
+      <section class="hero-band">
+        <div class="hero-copy">
+          <p id="teacherName">ครูผู้สอน</p>
+          <h2 id="courseDescription">เรียนสั้น เข้าใจง่าย วัดผลได้รายบุคคล</h2>
+        </div>
+        <form id="loginForm" class="login-panel">
+          <label>
+            ชื่อ-สกุล
+            <input id="fullName" name="fullName" autocomplete="name" required>
+          </label>
+          <label>
+            ศกร.ระดับตำบล
+            <input id="school" name="school" autocomplete="organization" placeholder="เช่น ศกร.ระดับตำบลบ้านใหม่" required>
+          </label>
+          <button type="submit">ลงชื่อเรียน</button>
+          <p id="loginStatus" class="muted"></p>
+        </form>
+      </section>
+
+      <section id="learnView" class="view active">
+        <div class="toolbar">
+          <div>
+            <p class="eyebrow">Learning Path</p>
+            <h2>บทเรียนและกิจกรรม</h2>
+          </div>
+          <div class="segmented">
+            <button id="preQuizBtn">ก่อนเรียน</button>
+            <button id="postQuizBtn">หลังเรียน</button>
+          </div>
+        </div>
+        <div id="lessons" class="lesson-list"></div>
+      </section>
+
+      <section id="quizView" class="view">
+        <div class="toolbar">
+          <div>
+            <p class="eyebrow" id="quizLabel">Quiz</p>
+            <h2 id="quizTitle">แบบทดสอบ</h2>
+          </div>
+          <button id="backToLearn" class="secondary">กลับบทเรียน</button>
+        </div>
+        <form id="quizForm" class="quiz-form"></form>
+      </section>
+
+      <section id="reportView" class="view">
+        <div class="toolbar">
+          <div>
+            <p class="eyebrow">My Report</p>
+            <h2>รายงานผลรายบุคคล</h2>
+          </div>
+          <button id="exportMyPdf">Export PDF</button>
+        </div>
+        <div id="myReport" class="report-grid"></div>
+      </section>
+
+      <section id="adminView" class="view">
+        <div class="toolbar">
+          <div>
+            <p class="eyebrow">Overview</p>
+            <h2>รายงานภาพรวมทุกคน</h2>
+          </div>
+          <form id="adminForm" class="admin-key">
+            <input id="adminKey" placeholder="กรอกรหัสครูจากชีต Settings ช่อง AdminKey">
+            <button type="submit">ดูรายงาน</button>
+          </form>
+        </div>
+        <p class="helper-text">AdminKey คือรหัสสำหรับครูผู้สอน ใช้เปิดรายงานภาพรวมทุกคน ดูได้จาก Google Sheet แท็บ Settings แถว AdminKey</p>
+        <div id="overviewReport" class="report-grid"></div>
+        <button id="exportOverviewPdf" class="hidden">Export PDF ภาพรวม</button>
+      </section>
+
+      <section class="asset-guide" aria-labelledby="assetGuideTitle">
+        <div>
+          <p class="eyebrow">Image Sizes</p>
+          <h2 id="assetGuideTitle">ขนาดภาพที่แนะนำ</h2>
+        </div>
+        <div class="asset-grid">
+          <div class="asset-spec">
+            <strong>ภาพปกบทเรียน</strong>
+            <span>1200 x 700 px</span>
+            <p>ใส่ในชีต Lessons คอลัมน์ CoverImageUrl</p>
+          </div>
+          <div class="asset-spec">
+            <strong>ภาพประกอบเนื้อหา</strong>
+            <span>1200 x 675 px</span>
+            <p>ใส่ในชีต Contents โดย Type = image และใส่ลิงก์ใน Url</p>
+          </div>
+          <div class="asset-spec">
+            <strong>ภาพพื้นหลังหน้าแรก</strong>
+            <span>1400 x 800 px</span>
+            <p>แก้ในไฟล์ style.css ตรง .hero-copy background</p>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <div id="toast" role="status" aria-live="polite"></div>
+    <script src="app.js"></script>
+  </body>
+</html>
