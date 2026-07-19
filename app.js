@@ -68,9 +68,20 @@ function bindEvents() {
   els.exitBtn.addEventListener('click', exitLearning);
   els.exportPdfBtn.addEventListener('click', exportPdf);
   els.exportOverviewPdfBtn.addEventListener('click', exportOverviewPdf);
+  els.overviewQuickBtn = document.getElementById('overviewQuickBtn');
+  els.overviewQuickBtn?.addEventListener('click', () => goToStep(7));
   els.adminBtn.addEventListener('click', openAdmin);
   els.adminCloseBtn.addEventListener('click', closeAdmin);
   els.adminSaveBtn.addEventListener('click', saveAllData);
+  els.progressSteps.forEach(el => {
+    el.addEventListener('click', () => {
+      const step = parseInt(el.dataset.step);
+      if (step === 7) { goToStep(7); return; }
+      if (!state.learner) { toast('กรุณาลงทะเบียนก่อน'); return; }
+      if (step === 1) { goToStep(1); return; }
+      toast('กรุณาเรียนตามลำดับขั้นตอน');
+    });
+  });
   els.adminTabs.forEach(tab => {
     tab.addEventListener('click', () => switchAdminTab(tab.dataset.tab));
   });
