@@ -2,116 +2,252 @@ const API_URL = 'https://script.google.com/macros/s/AKfycbyo09GjBLJQ_-WG6Yzfqv0-
 
 const state = {
   course: null,
-  learner: JSON.parse(localStorage.getItem('microLearner') || 'null'),
-  currentQuiz: null,
-  adminKey: ''
+  learner: null,
+  reflection: ''
 };
 
-const els = {
-  courseTitle: document.querySelector('#courseTitle'),
-  courseDescription: document.querySelector('#courseDescription'),
-  teacherName: document.querySelector('#teacherName'),
-  loginForm: document.querySelector('#loginForm'),
-  loginStatus: document.querySelector('#loginStatus'),
-  lessons: document.querySelector('#lessons'),
-  preQuizBtn: document.querySelector('#preQuizBtn'),
-  postQuizBtn: document.querySelector('#postQuizBtn'),
-  backToLearn: document.querySelector('#backToLearn'),
-  quizForm: document.querySelector('#quizForm'),
-  quizLabel: document.querySelector('#quizLabel'),
-  quizTitle: document.querySelector('#quizTitle'),
-  myReport: document.querySelector('#myReport'),
-  adminForm: document.querySelector('#adminForm'),
-  overviewReport: document.querySelector('#overviewReport'),
-  exportMyPdf: document.querySelector('#exportMyPdf'),
-  exportOverviewPdf: document.querySelector('#exportOverviewPdf'),
-  toast: document.querySelector('#toast')
-};
+const els = {};
 
 document.addEventListener('DOMContentLoaded', init);
 
 async function init() {
+  cacheEls();
   bindEvents();
-  if (API_URL.includes('PASTE_YOUR')) {
-    toast('กรุณาใส่ Web app URL ใน app.js ก่อนใช้งานจริง');
-  }
   state.course = await api('course');
-  renderCourse();
-  renderLoginState();
+  renderCourseInfo();
+}
+
+function cacheEls() {
+  els.courseTitle = document.getElementById('courseTitle');
+  els.courseDescription = document.getElementById('courseDescription');
+  els.teacherName = document.getElementById('teacherName');
+  els.loginForm = document.getElementById('loginForm');
+  els.fullName = document.getElementById('fullName');
+  els.classroom = document.getElementById('classroom');
+  els.registerBtn = document.getElementById('registerBtn');
+  els.objectivesContent = document.getElementById('objectivesContent');
+  els.objOkBtn = document.getElementById('objOkBtn');
+  els.preTestForm = document.getElementById('preTestForm');
+  els.lessonContent = document.getElementById('lessonContent');
+  els.reflectionInput = document.getElementById('reflectionInput');
+  els.finishBtn = document.getElementById('finishBtn');
+  els.postTestForm = document.getElementById('postTestForm');
+  els.myReport = document.getElementById('myReport');
+  els.overviewBtn = document.getElementById('overviewBtn');
+  els.overviewReport = document.getElementById('overviewReport');
+  els.homeBtn = document.getElementById('homeBtn');
+  els.restartBtn = document.getElementById('restartBtn');
+  els.exitBtn = document.getElementById('exitBtn');
+  els.adminBtn = document.getElementById('adminBtn');
+  els.adminCloseBtn = document.getElementById('adminCloseBtn');
+  els.adminSaveBtn = document.getElementById('adminSaveBtn');
+  els.adminSettings = document.getElementById('adminSettings');
+  els.adminLessons = document.getElementById('adminLessons');
+  els.adminContents = document.getElementById('adminContents');
+  els.adminQuestions = document.getElementById('adminQuestions');
+  els.toast = document.getElementById('toast');
+  els.progressSteps = document.querySelectorAll('.progress-step');
+  els.adminTabs = document.querySelectorAll('.admin-tab');
 }
 
 function bindEvents() {
-  els.loginForm.addEventListener('submit', onLogin);
-  els.preQuizBtn.addEventListener('click', () => openQuiz('pre'));
-  els.postQuizBtn.addEventListener('click', () => openQuiz('post'));
-  els.backToLearn.addEventListener('click', () => showView('learn'));
-  els.quizForm.addEventListener('submit', submitQuiz);
-  els.adminForm.addEventListener('submit', loadOverview);
-  els.exportMyPdf.addEventListener('click', exportMyPdf);
-  els.exportOverviewPdf.addEventListener('click', exportOverviewPdf);
-
-  document.querySelectorAll('[data-view]').forEach((button) => {
-    button.addEventListener('click', () => {
-      const view = button.dataset.view;
-      if (view === 'report') loadMyReport();
-      if (view === 'admin') showView('admin');
-      if (view === 'learn') showView('learn');
-    });
+  els.registerBtn.addEventListener('click', onLogin);
+  els.fullName.addEventListener('keydown', enterToNext);
+  els.classroom.addEventListener('keydown', enterToNext);
+  els.objOkBtn.addEventListener('click', () => goToStep(3));
+  els.preTestForm.addEventListener('submit', submitPreTest);
+  els.finishBtn.addEventListener('click', finishLearning);
+  els.postTestForm.addEventListener('submit', submitPostTest);
+  els.overviewBtn.addEventListener('click', () => goToStep(7));
+  els.homeBtn.addEventListener('click', goHome);
+  els.restartBtn.addEventListener('click', restartLearning);
+  els.exitBtn.addEventListener('click', exitLearning);
+  els.adminBtn.addEventListener('click', openAdmin);
+  els.adminCloseBtn.addEventListener('click', closeAdmin);
+  els.adminSaveBtn.addEventListener('click', saveAllData);
+  els.adminTabs.forEach(tab => {
+    tab.addEventListener('click', () => switchAdminTab(tab.dataset.tab));
+  });
+  els.reflectionInput.addEventListener('input', () => {
+    state.reflection = els.reflectionInput.value;
+    const len = state.reflection.trim().length;
+    document.getElementById('charCount').textContent = len;
   });
 }
 
-async function onLogin(event) {
-  event.preventDefault();
-  const button = event.submitter || els.loginForm.querySelector('button[type="submit"]');
-  const form = new FormData(els.loginForm);
-  const payload = Object.fromEntries(form.entries());
-  await withButtonLoading(button, 'กำลังลงชื่อ...', async () => {
+function renderCourseInfo() {
+  const s = state.course.settings;
+  els.courseTitle.textContent = s.CourseTitle || 'Micro Learning';
+  els.courseDescription.textContent = s.CourseDescription || '';
+  els.teacherName.textContent = s.TeacherName || '';
+  document.title = s.CourseTitle || 'Micro Learning';
+}
+
+function goToStep(n) {
+  document.querySelectorAll('.step').forEach(el => el.classList.remove('active'));
+  const target = document.getElementById('step' + n);
+  if (!target) return;
+  target.classList.add('active');
+  window.scrollTo({ top: 0 });
+  updateProgress(n);
+  if (!state.course && n >= 2) {
+    els.objectivesContent.innerHTML = '<p class="empty-msg">กำลังโหลดข้อมูล...</p>';
+    return;
+  }
+  if (n === 2) renderObjectives();
+  else if (n === 3) openQuiz('pre', els.preTestForm);
+  else if (n === 4) renderLearningRoom();
+  else if (n === 5) openQuiz('post', els.postTestForm);
+  else if (n === 6) loadMyReport();
+  else if (n === 7) loadOverview();
+}
+
+function updateProgress(current) {
+  els.progressSteps.forEach(el => {
+    const step = parseInt(el.dataset.step);
+    el.classList.toggle('active', step === current);
+    el.classList.toggle('done', step < current);
+  });
+}
+
+function enterToNext(e) {
+  if (e.key === 'Enter') {
+    if (e.target.id === 'fullName') els.classroom.focus();
+    else if (e.target.id === 'classroom') els.registerBtn.click();
+  }
+}
+
+async function onLogin() {
+  const name = els.fullName.value.trim();
+  const room = els.classroom.value.trim();
+  if (!name || !room) {
+    toast('กรุณากรอกชื่อ-สกุล และห้องเรียน');
+    if (!name) els.fullName.focus();
+    else els.classroom.focus();
+    return;
+  }
+  if (!state.course) {
+    toast('กำลังโหลดข้อมูล กรุณารอสักครู่');
+    return;
+  }
+  const payload = {
+    fullName: name,
+    school: room,
+    email: name.replace(/\s+/g, '') + '@learner.local'
+  };
+  await withButtonLoading(els.registerBtn, 'กำลังลงทะเบียน...', async () => {
     const result = await api('register', payload);
     state.learner = result.learner;
-    localStorage.setItem('microLearner', JSON.stringify(state.learner));
-    renderLoginState();
-    await alertBox('ลงชื่อเรียนเรียบร้อย', `เข้าสู่บทเรียนในชื่อ ${state.learner.fullName}`, 'success');
+    await alertBox('ลงทะเบียนเรียบร้อย', 'ยินดีต้อนรับ สู่การเรียนรู้', 'success');
+    goToStep(2);
   });
 }
 
-function renderCourse() {
-  const { settings, lessons, contents } = state.course;
-  els.courseTitle.textContent = settings.CourseTitle || 'ชุดการเรียนรู้ออนไลน์';
-  els.courseDescription.textContent = settings.CourseDescription || '';
-  els.teacherName.textContent = settings.TeacherName || '';
-  document.title = settings.CourseTitle || 'Micro Learning Template';
+function renderObjectives() {
+  const contents = state.course.contents || [];
+  const textContent = contents.find(c => c.Type === 'text');
+  els.objectivesContent.innerHTML = `
+    <div class="obj-icon">&#x1F4D6;</div>
+    <h3>${escapeHtml(textContent ? textContent.Title : 'วัตถุประสงค์การเรียนรู้')}</h3>
+    <p>${escapeHtml(textContent ? textContent.Body : state.course.settings.CourseDescription || '')}</p>
+  `;
+}
 
-  els.lessons.innerHTML = lessons.map((lesson) => {
-    const lessonContents = contents.filter((item) => item.LessonID === lesson.LessonID);
+function openQuiz(type, formEl) {
+  const label = type === 'pre' ? 'ก่อนเรียน' : 'หลังเรียน';
+  const questions = state.course.questions.filter(q => q.QuizType === type);
+  if (!questions.length) {
+    formEl.innerHTML = `<p class="empty-msg">ไม่มีแบบทดสอบ${label}</p>`;
+    return;
+  }
+  formEl.innerHTML = questions.map((q, i) => `
+    <div class="question">
+      <div class="q-header">
+        <span class="q-num">${i + 1}</span>
+        <h3>${escapeHtml(q.Question)}</h3>
+      </div>
+      <div class="choices">
+        ${q.Choices.map(c => `
+          <label class="choice">
+            <input type="radio" name="${escapeAttr(q.QuestionID)}" value="${escapeAttr(c)}" required>
+            <span class="choice-mark"></span>
+            <span>${escapeHtml(c)}</span>
+          </label>
+        `).join('')}
+      </div>
+    </div>
+  `).join('') + '<button type="submit" class="btn-primary btn-full">&#x270F;&#xFE0F; ส่งคำตอบ</button>';
+}
+
+async function submitPreTest(event) {
+  event.preventDefault();
+  const btn = event.submitter || els.preTestForm.querySelector('button');
+  await submitQuiz(btn, 'pre');
+  goToStep(4);
+}
+
+async function submitPostTest(event) {
+  event.preventDefault();
+  const btn = event.submitter || els.postTestForm.querySelector('button');
+  await submitQuiz(btn, 'post');
+  goToStep(6);
+}
+
+async function submitQuiz(button, quizType) {
+  const questions = state.course.questions.filter(q => q.QuizType === quizType);
+  const form = quizType === 'pre' ? els.preTestForm : els.postTestForm;
+  const formData = new FormData(form);
+  const answers = questions.map(q => ({
+    questionId: q.QuestionID,
+    answer: formData.get(q.QuestionID) || ''
+  }));
+  await withButtonLoading(button, 'กำลังส่ง...', async () => {
+    const result = await api('submitQuiz', {
+      learnerId: state.learner.learnerId,
+      quizType,
+      answers
+    });
+    const status = quizType === 'post'
+      ? (result.passed ? 'ผ่านเกณฑ์' : 'ยังไม่ผ่านเกณฑ์')
+      : 'บันทึกคะแนนก่อนเรียนแล้ว';
+    const icon = result.passed === false ? 'warning' : 'success';
+    await alertBox('ส่งคำตอบแล้ว', `คุณได้ ${result.percent}% (${status})`, icon);
+  });
+}
+
+function renderLearningRoom() {
+  const lessons = state.course.lessons || [];
+  const contents = state.course.contents || [];
+  els.lessonContent.innerHTML = lessons.map(lesson => {
+    const lessonContents = contents.filter(c => c.LessonID === lesson.LessonID);
     return `
-      <article class="lesson">
-        <img src="${escapeAttr(lesson.CoverImageUrl || 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=1200')}" alt="">
-        <div class="lesson-body">
-          <h3>${escapeHtml(lesson.Title)}</h3>
-          <p class="muted">${escapeHtml(lesson.Description || '')}</p>
-          <div class="content-list">
-            ${lessonContents.map(renderContent).join('')}
+      <div class="lesson-block">
+        <div class="lesson-header">
+          <div class="lesson-icon">&#x1F4DA;</div>
+          <div>
+            <h3>${escapeHtml(lesson.Title)}</h3>
+            ${lesson.Description ? `<p class="lesson-desc">${escapeHtml(lesson.Description)}</p>` : ''}
           </div>
         </div>
-      </article>
+        ${lessonContents.map(renderContentItem).join('')}
+      </div>
     `;
   }).join('');
-
-  document.querySelectorAll('[data-content-id]').forEach((button) => {
-    button.addEventListener('click', () => markDone(button.dataset.contentId));
-  });
+  els.reflectionInput.value = state.reflection || '';
 }
 
-function renderContent(item) {
+function renderContentItem(item) {
   const media = mediaFor(item);
+  const iconMap = { text: '&#x1F4C4;', youtube: '&#x1F3AC;', image: '&#x1F5BC;&#xFE0F;', file: '&#x1F4C1;', worksheet: '&#x1F4DD;' };
+  const icon = iconMap[item.Type] || '&#x1F4C4;';
   return `
     <div class="content-item">
-      <div>
+      <div class="content-icon">${icon}</div>
+      <div class="content-body">
         <h4>${escapeHtml(item.Title)}</h4>
-        <p>${escapeHtml(item.Body || '')}</p>
+        ${item.Body ? `<p>${escapeHtml(item.Body)}</p>` : ''}
+        ${media}
       </div>
-      <button data-content-id="${escapeAttr(item.ContentID)}">เสร็จแล้ว</button>
-      ${media}
     </div>
   `;
 }
@@ -119,216 +255,374 @@ function renderContent(item) {
 function mediaFor(item) {
   if (item.Type === 'youtube' && item.Url) {
     const id = youtubeId(item.Url);
-    return id ? `<iframe class="content-media youtube-frame" src="https://www.youtube.com/embed/${id}" allowfullscreen title="${escapeAttr(item.Title)}"></iframe>` : '';
+    return id ? `<div class="media-wrapper"><iframe class="youtube-frame" src="https://www.youtube.com/embed/${id}" allowfullscreen></iframe></div>` : '';
   }
   if (item.Type === 'image' && item.Url) {
-    return `<img class="content-media" src="${escapeAttr(item.Url)}" alt="${escapeAttr(item.Title)}">`;
+    return `<div class="media-wrapper"><img class="content-image" src="${escapeAttr(item.Url)}" alt="${escapeAttr(item.Title)}"></div>`;
   }
   if ((item.Type === 'file' || item.Type === 'worksheet') && item.AttachmentUrl) {
-    return `<p class="content-media"><a href="${escapeAttr(item.AttachmentUrl)}" target="_blank" rel="noopener">เปิดไฟล์ประกอบ</a></p>`;
+    return `<a class="file-link" href="${escapeAttr(item.AttachmentUrl)}" target="_blank" rel="noopener">&#x1F4CE; เปิดไฟล์ประกอบ</a>`;
   }
   return '';
 }
 
-async function markDone(contentId) {
-  if (!requireLearner()) return;
-  const button = document.querySelector(`[data-content-id="${CSS.escape(contentId)}"]`);
-  await withButtonLoading(button, 'บันทึก...', async () => {
-    await api('saveProgress', { learnerId: state.learner.learnerId, contentId, status: 'done' });
-    await alertBox('บันทึกแล้ว', 'ระบบบันทึกความก้าวหน้าของคุณเรียบร้อย', 'success');
-  });
-}
-
-function openQuiz(type) {
-  if (!requireLearner()) return;
-  state.currentQuiz = type;
-  const label = type === 'pre' ? 'Pre-test' : 'Post-test';
-  els.quizLabel.textContent = label;
-  els.quizTitle.textContent = type === 'pre' ? 'แบบทดสอบก่อนเรียน' : 'แบบทดสอบหลังเรียน';
-  const questions = state.course.questions.filter((q) => q.QuizType === type);
-  els.quizForm.innerHTML = questions.map((q, index) => `
-    <fieldset class="question">
-      <h3>${index + 1}. ${escapeHtml(q.Question)}</h3>
-      ${q.Choices.map((choice) => `
-        <label class="choice">
-          <input type="radio" name="${escapeAttr(q.QuestionID)}" value="${escapeAttr(choice)}" required>
-          <span>${escapeHtml(choice)}</span>
-        </label>
-      `).join('')}
-    </fieldset>
-  `).join('') + '<button type="submit">ส่งคำตอบ</button>';
-  showView('quiz');
-}
-
-async function submitQuiz(event) {
-  event.preventDefault();
-  const button = event.submitter || els.quizForm.querySelector('button[type="submit"]');
-  const questions = state.course.questions.filter((q) => q.QuizType === state.currentQuiz);
-  const form = new FormData(els.quizForm);
-  const answers = questions.map((q) => ({ questionId: q.QuestionID, answer: form.get(q.QuestionID) || '' }));
-  await withButtonLoading(button, 'กำลังส่ง...', async () => {
-    const result = await api('submitQuiz', { learnerId: state.learner.learnerId, quizType: state.currentQuiz, answers });
-    const status = state.currentQuiz === 'post'
-      ? (result.passed ? 'ผ่านเกณฑ์' : 'ยังไม่ผ่านเกณฑ์')
-      : 'บันทึกคะแนนก่อนเรียนแล้ว';
-    await alertBox('ส่งคำตอบแล้ว', `คุณได้ ${result.percent}% (${status})`, result.passed === false ? 'warning' : 'success');
-    await loadMyReport();
-  });
+async function finishLearning() {
+  const text = (els.reflectionInput.value || '').trim();
+  if (text.length < 20) {
+    toast('กรุณาเขียนสะท้อนคิดอย่างน้อย 20 ตัวอักษร');
+    els.reflectionInput.focus();
+    return;
+  }
+  await alertBox('&#x2705; บันทึกการเรียนรู้แล้ว', 'คุณได้เรียนรู้ครบทุกเนื้อหาแล้ว ไปทำแบบทดสอบหลังเรียนกัน!', 'success');
+  goToStep(5);
 }
 
 async function loadMyReport() {
-  if (!requireLearner()) return;
+  if (!state.learner) return;
   const result = await api('report', { learnerId: state.learner.learnerId });
   renderIndividual(result.individual);
-  showView('report');
+}
+
+function calcImprovement(pre, post) {
+  if (!pre || !post) return { diff: null, normGain: null };
+  const prePct = pre.Percent;
+  const postPct = post.Percent;
+  const diff = postPct - prePct;
+  const normGain = prePct < 100 ? Math.round((postPct - prePct) / (100 - prePct) * 100) : 0;
+  return { diff, normGain };
 }
 
 function renderIndividual(report) {
   if (!report) {
-    els.myReport.innerHTML = '<p class="muted">ยังไม่มีข้อมูลรายงาน</p>';
+    els.myReport.innerHTML = '<p class="empty-msg">ยังไม่มีข้อมูล</p>';
     return;
   }
+  const passed = report.post ? (String(report.post.Passed) === 'true') : false;
+  const imp = calcImprovement(report.pre, report.post);
+  const impDiff = imp.diff !== null ? `${imp.diff >= 0 ? '+' : ''}${imp.diff}` : '-';
+  const impGain = imp.normGain !== null ? `Gain ${imp.normGain}%` : (report.pre ? 'รอสอบหลังเรียน' : 'รอสอบ');
+  const impClass = imp.diff === null ? '' : (imp.diff >= 20 ? 'metric-green' : (imp.diff >= 0 ? 'metric-blue' : 'metric-orange'));
   els.myReport.innerHTML = `
-    ${metric('ก่อนเรียน', percent(report.pre))}
-    ${metric('หลังเรียน', percent(report.post))}
-    ${metric('ความก้าวหน้า', `${report.progress.percent}%`)}
-    ${metric('สถานะ', report.post ? (String(report.post.Passed) === 'true' ? 'ผ่าน' : 'ยังไม่ผ่าน') : '-')}
+    <div class="metrics">
+      <div class="metric metric-blue">
+        <div class="metric-icon">&#x1F4DD;</div>
+        <span>ก่อนเรียน</span>
+        <strong>${percent(report.pre)}</strong>
+      </div>
+      <div class="metric metric-green">
+        <div class="metric-icon">&#x1F4CA;</div>
+        <span>หลังเรียน</span>
+        <strong>${percent(report.post)}</strong>
+      </div>
+      <div class="metric ${impClass || 'metric-purple'}">
+        <div class="metric-icon">&#x1F4C8;</div>
+        <span>คะแนนพัฒนา</span>
+        <strong>${impDiff}</strong>
+        <small>${impGain}</small>
+      </div>
+      <div class="metric ${passed ? 'metric-green' : 'metric-orange'}">
+        <div class="metric-icon">${passed ? '&#x2705;' : '&#x23F3;'}</div>
+        <span>สถานะ</span>
+        <strong>${passed ? 'ผ่าน' : 'ยังไม่ผ่าน'}</strong>
+      </div>
+    </div>
+    ${report.reflection ? `<div class="reflection-note"><strong>&#x1F4AD; สะท้อนคิด:</strong> ${escapeHtml(report.reflection)}</div>` : ''}
   `;
 }
 
-async function loadOverview(event) {
-  event.preventDefault();
-  const button = event.submitter || els.adminForm.querySelector('button[type="submit"]');
-  state.adminKey = document.querySelector('#adminKey').value.trim();
-  await withButtonLoading(button, 'กำลังตรวจ...', async () => {
-    const result = await api('report', { adminKey: state.adminKey });
-    if (!result.overview) {
-      await alertBox(
-        'รหัสครูไม่ถูกต้อง',
-        'ให้เปิด Google Sheet แท็บ Settings แล้วคัดลอกค่าในแถว AdminKey มาใส่ช่องนี้ ตัวพิมพ์เล็ก/ใหญ่ต้องตรงกัน',
-        'error'
-      );
-      return;
-    }
-    renderOverview(result.overview);
-    els.exportOverviewPdf.classList.remove('hidden');
-    await alertBox('เปิดรายงานภาพรวมแล้ว', 'ข้อมูลภาพรวมของผู้เรียนพร้อมใช้งาน', 'success');
-  });
+async function loadOverview() {
+  const adminKey = state.course?.settings?.AdminKey;
+  if (!adminKey) {
+    els.overviewReport.innerHTML = '<p class="empty-msg">ไม่พบข้อมูล</p>';
+    return;
+  }
+  const result = await api('report', { adminKey });
+  if (!result.overview) {
+    els.overviewReport.innerHTML = '<p class="empty-msg">ยังไม่มีข้อมูลผู้เรียน</p>';
+    return;
+  }
+  renderOverview(result.overview);
 }
 
 function renderOverview(overview) {
-  const rows = overview.summaries.map((item) => `
+  const rows = overview.summaries.map(item => {
+    const imp = calcImprovement(item.pre, item.post);
+    const impStr = imp.diff !== null ? `${imp.diff >= 0 ? '+' : ''}${imp.diff}` : '-';
+    return `
     <tr>
       <td>${escapeHtml(item.learner.FullName)}</td>
       <td>${escapeHtml(item.learner.SubdistrictCenter || item.learner.School || '-')}</td>
-      <td>${percent(item.pre)}</td>
-      <td>${percent(item.post)}</td>
-      <td>${item.progress.percent}%</td>
-      <td>${item.post ? (String(item.post.Passed) === 'true' ? 'ผ่าน' : 'ยังไม่ผ่าน') : '-'}</td>
-    </tr>
-  `).join('');
+      <td class="num">${percent(item.pre)}</td>
+      <td class="num">${percent(item.post)}</td>
+      <td class="num">${impStr}</td>
+      <td class="status">${item.post ? (String(item.post.Passed) === 'true' ? '&#x2705; ผ่าน' : '&#x274C; ไม่ผ่าน') : '-'}</td>
+    </tr>`;
+  }).join('');
   els.overviewReport.innerHTML = `
-    ${metric('ผู้เรียน', overview.learnerCount)}
-    ${metric('ส่งหลังเรียน', overview.completedPostCount)}
-    ${metric('ค่าเฉลี่ย', `${overview.averagePostPercent}%`)}
-    ${metric('ผ่าน', overview.passedCount)}
-    <div class="report-table">
+    <div class="metrics">
+      <div class="metric metric-blue">
+        <div class="metric-icon">&#x1F465;</div>
+        <span>ผู้เรียนทั้งหมด</span>
+        <strong>${overview.learnerCount}</strong>
+      </div>
+      <div class="metric metric-green">
+        <div class="metric-icon">&#x2705;</div>
+        <span>ส่งหลังเรียน</span>
+        <strong>${overview.completedPostCount}</strong>
+      </div>
+      <div class="metric metric-purple">
+        <div class="metric-icon">&#x1F4C8;</div>
+        <span>ค่าเฉลี่ย</span>
+        <strong>${overview.averagePostPercent}%</strong>
+      </div>
+      <div class="metric metric-green">
+        <div class="metric-icon">&#x1F3C6;</div>
+        <span>ผ่านเกณฑ์</span>
+        <strong>${overview.passedCount}</strong>
+      </div>
+    </div>
+    <div class="table-wrap">
       <table>
-        <thead><tr><th>ชื่อ</th><th>ศกร.ระดับตำบล</th><th>ก่อนเรียน</th><th>หลังเรียน</th><th>ความก้าวหน้า</th><th>สถานะ</th></tr></thead>
+        <thead><tr><th>ชื่อ</th><th>ศกร.</th><th>ก่อนเรียน</th><th>หลังเรียน</th><th>พัฒนา</th><th>สถานะ</th></tr></thead>
         <tbody>${rows}</tbody>
       </table>
     </div>
   `;
 }
 
-async function exportMyPdf() {
-  if (!requireLearner()) return;
-  await withButtonLoading(els.exportMyPdf, 'กำลังสร้าง PDF...', async () => {
-    const result = await api('exportPdf', { type: 'individual', learnerId: state.learner.learnerId });
-    window.open(result.url, '_blank', 'noopener');
-  });
-}
-
-async function exportOverviewPdf() {
-  await withButtonLoading(els.exportOverviewPdf, 'กำลังสร้าง PDF...', async () => {
-    const result = await api('exportPdf', { type: 'overview', adminKey: state.adminKey });
-    window.open(result.url, '_blank', 'noopener');
-  });
-}
-
-function renderLoginState() {
-  if (!state.learner) {
-    els.loginStatus.textContent = 'กรอกข้อมูลเพื่อเริ่มเรียนและบันทึกผล';
-    els.loginStatus.classList.remove('learning-pulse');
-    return;
-  }
-  els.loginStatus.textContent = `กำลังเรียน... ${state.learner.fullName} (${state.learner.school || 'ไม่ระบุ ศกร.ระดับตำบล'})`;
-  els.loginStatus.classList.add('learning-pulse');
-  document.querySelector('#fullName').value = state.learner.fullName || '';
-  document.querySelector('#school').value = state.learner.school || '';
-}
-
-function showView(name) {
-  document.querySelectorAll('.view').forEach((view) => view.classList.remove('active'));
-  document.querySelector(`#${name}View`).classList.add('active');
-  window.scrollTo({ top: 0, behavior: 'smooth' });
-}
-
-function requireLearner() {
-  if (state.learner) return true;
-  alertBox('กรุณาลงชื่อเรียนก่อน', 'ใส่ชื่อ-สกุล และ ศกร.ระดับตำบล เพื่อให้ระบบบันทึกผลรายบุคคล', 'info');
-  document.querySelector('#fullName').focus();
-  return false;
-}
-
-function metric(label, value) {
-  return `<div class="metric"><span class="muted">${escapeHtml(label)}</span><strong>${escapeHtml(value)}</strong></div>`;
-}
-
 function percent(result) {
   return result ? `${result.Percent}%` : '-';
 }
 
-async function api(action, payload = {}) {
-  if (API_URL.includes('PASTE_YOUR')) {
-    if (action === 'course') return demoCourse();
-    throw new Error('Missing API_URL');
+function goHome() {
+  goToStep(1);
+}
+
+function restartLearning() {
+  goToStep(2);
+  renderObjectives();
+}
+
+function exitLearning() {
+  state.learner = null;
+  state.reflection = '';
+  els.fullName.value = '';
+  els.classroom.value = '';
+  goToStep(1);
+  renderCourseInfo();
+}
+
+/* === Admin Panel === */
+let adminData = null;
+let adminPassword = '';
+
+async function openAdmin() {
+  if (!state.course?.settings?.AdminKey) {
+    toast('ไม่พบ AdminKey ในระบบ');
+    return;
   }
+  const { value: pw, isConfirmed } = await Swal.fire({
+    title: 'รหัสผ่านผู้ดูแล',
+    text: 'กรอกรหัสผ่านเพื่อเข้าใช้งาน',
+    input: 'password',
+    inputPlaceholder: 'รหัสผ่าน',
+    confirmButtonText: 'เข้าสู่ระบบ',
+    showCancelButton: true,
+    cancelButtonText: 'ยกเลิก',
+    inputValidator: v => v ? null : 'กรุณากรอกรหัสผ่าน'
+  });
+  if (!isConfirmed || !pw) return;
+  const result = await api('verifyAdmin', { adminKey: pw });
+  if (!result.ok) {
+    await alertBox('รหัสผ่านไม่ถูกต้อง', 'กรุณาลองอีกครั้ง', 'error');
+    return;
+  }
+  adminPassword = pw;
+  if (!adminData) adminData = JSON.parse(JSON.stringify(state.course));
+  renderAdminTabs();
+  document.querySelectorAll('.step').forEach(el => el.classList.remove('active'));
+  document.getElementById('step8').classList.add('active');
+  switchAdminTab('settings');
+}
+
+function closeAdmin() {
+  adminData = null;
+  document.getElementById('step8').classList.remove('active');
+  const activeStep = document.querySelector('.step.active');
+  if (!activeStep) document.getElementById('step1').classList.add('active');
+}
+
+function switchAdminTab(name) {
+  els.adminTabs.forEach(t => t.classList.toggle('active', t.dataset.tab === name));
+  document.querySelectorAll('.admin-panel').forEach(p => p.classList.remove('active'));
+  document.getElementById('admin' + name.charAt(0).toUpperCase() + name.slice(1)).classList.add('active');
+  if (name === 'lessons') renderAdminLessons();
+  else if (name === 'contents') renderAdminContents();
+  else if (name === 'questions') renderAdminQuestions();
+}
+
+function renderAdminTabs() {
+  renderAdminSettings();
+}
+
+function renderAdminSettings() {
+  const s = adminData.settings;
+  els.adminSettings.innerHTML = `
+    <div class="field"><label>ชื่อรายวิชา</label><input id="adCourseTitle" value="${escapeAttr(s.CourseTitle || '')}"></div>
+    <div class="field"><label>คำอธิบาย</label><input id="adCourseDesc" value="${escapeAttr(s.CourseDescription || '')}"></div>
+    <div class="field"><label>ชื่อครู</label><input id="adTeacher" value="${escapeAttr(s.TeacherName || '')}"></div>
+    <div class="field"><label>เกณฑ์ผ่าน (%)</label><input id="adPass" type="number" value="${s.PassPercent || 70}"></div>
+    <div class="field"><label>AdminKey</label><input id="adAdminKey" value="${escapeAttr(s.AdminKey || '')}" readonly style="background:#f3f4f6;color:#6b7280"></div>
+  `;
+}
+
+function renderAdminLessons() {
+  const lessons = adminData.lessons || [];
+  els.adminLessons.innerHTML = lessons.map((l, i) => `
+    <div class="admin-item">
+      <div class="field"><label>ชื่อบทเรียน</label><input class="ad-lesson-title" value="${escapeAttr(l.Title)}"></div>
+      <div class="field"><label>คำอธิบาย</label><input class="ad-lesson-desc" value="${escapeAttr(l.Description || '')}"></div>
+      <div class="field"><label>URL ปก</label><input class="ad-lesson-cover" value="${escapeAttr(l.CoverImageUrl || '')}"></div>
+      <button class="btn-outline ad-del" data-idx="${i}">&#x1F5D1; ลบ</button>
+    </div>
+  `).join('') + '<button id="adAddLesson" class="btn-outline">&#x2795; เพิ่มบทเรียน</button>';
+  document.querySelectorAll('.ad-del').forEach(b => b.addEventListener('click', () => {
+    adminData.lessons.splice(parseInt(b.dataset.idx), 1);
+    renderAdminLessons();
+  }));
+  document.getElementById('adAddLesson')?.addEventListener('click', () => {
+    adminData.lessons.push({ LessonID: 'L' + Date.now(), Title: '', Description: '', CoverImageUrl: '' });
+    renderAdminLessons();
+  });
+}
+
+function renderAdminContents() {
+  const contents = adminData.contents || [];
+  els.adminContents.innerHTML = contents.map((c, i) => `
+    <div class="admin-item">
+      <div class="field"><label>ชื่อเนื้อหา</label><input class="ad-cont-title" value="${escapeAttr(c.Title)}"></div>
+      <div class="field"><label>ประเภท</label>
+        <select class="ad-cont-type">
+          ${['text','youtube','image','worksheet'].map(t => `<option ${c.Type === t ? 'selected' : ''}>${t}</option>`).join('')}
+        </select>
+      </div>
+      <div class="field"><label>เนื้อหา (Body)</label><textarea class="ad-cont-body" rows="2">${escapeHtml(c.Body || '')}</textarea></div>
+      <div class="field"><label>URL/Link</label><input class="ad-cont-url" value="${escapeAttr(c.Url || '')}"></div>
+      <button class="btn-outline ad-del" data-idx="${i}">&#x1F5D1; ลบ</button>
+    </div>
+  `).join('') + '<button id="adAddContent" class="btn-outline">&#x2795; เพิ่มเนื้อหา</button>';
+  document.querySelectorAll('#adminContents .ad-del').forEach(b => b.addEventListener('click', () => {
+    adminData.contents.splice(parseInt(b.dataset.idx), 1);
+    renderAdminContents();
+  }));
+  document.getElementById('adAddContent')?.addEventListener('click', () => {
+    adminData.contents.push({ ContentID: 'C' + Date.now(), LessonID: '', Type: 'text', Title: '', Body: '', Url: '', AttachmentUrl: '' });
+    renderAdminContents();
+  });
+}
+
+function renderAdminQuestions() {
+  const questions = adminData.questions || [];
+  els.adminQuestions.innerHTML = questions.map((q, i) => `
+    <div class="admin-item">
+      <div class="field"><label>คำถาม</label><input class="ad-q-text" value="${escapeAttr(q.Question)}"></div>
+      <div class="field"><label>ประเภท</label>
+        <select class="ad-q-type">
+          ${['pre','post'].map(t => `<option ${q.QuizType === t ? 'selected' : ''}>${t}</option>`).join('')}
+        </select>
+      </div>
+      <div class="field"><label>ตัวเลือก (คั่นด้วย | )</label><input class="ad-q-choices" value="${escapeAttr((q.Choices || []).join(' | '))}"></div>
+      <button class="btn-outline ad-del" data-idx="${i}">&#x1F5D1; ลบ</button>
+    </div>
+  `).join('') + '<button id="adAddQuestion" class="btn-outline">&#x2795; เพิ่มคำถาม</button>';
+  document.querySelectorAll('#adminQuestions .ad-del').forEach(b => b.addEventListener('click', () => {
+    adminData.questions.splice(parseInt(b.dataset.idx), 1);
+    renderAdminQuestions();
+  }));
+  document.getElementById('adAddQuestion')?.addEventListener('click', () => {
+    adminData.questions.push({ QuestionID: 'Q' + Date.now(), QuizType: 'pre', Question: '', Choices: ['ตัวเลือก1','ตัวเลือก2'], Points: 1 });
+    renderAdminQuestions();
+  });
+}
+
+function collectAdminData() {
+  const s = adminData.settings;
+  s.CourseTitle = document.getElementById('adCourseTitle')?.value || s.CourseTitle;
+  s.CourseDescription = document.getElementById('adCourseDesc')?.value || s.CourseDescription;
+  s.TeacherName = document.getElementById('adTeacher')?.value || s.TeacherName;
+  s.PassPercent = parseInt(document.getElementById('adPass')?.value) || 70;
+  s.AdminKey = document.getElementById('adAdminKey')?.value || s.AdminKey;
+
+  document.querySelectorAll('#adminLessons .admin-item').forEach((item, i) => {
+    const l = adminData.lessons[i];
+    if (!l) return;
+    l.Title = item.querySelector('.ad-lesson-title')?.value || l.Title;
+    l.Description = item.querySelector('.ad-lesson-desc')?.value || l.Description;
+    l.CoverImageUrl = item.querySelector('.ad-lesson-cover')?.value || l.CoverImageUrl;
+  });
+
+  document.querySelectorAll('#adminContents .admin-item').forEach((item, i) => {
+    const c = adminData.contents[i];
+    if (!c) return;
+    c.Title = item.querySelector('.ad-cont-title')?.value || c.Title;
+    c.Type = item.querySelector('.ad-cont-type')?.value || c.Type;
+    c.Body = item.querySelector('.ad-cont-body')?.value || c.Body;
+    c.Url = item.querySelector('.ad-cont-url')?.value || c.Url;
+    c.AttachmentUrl = c.Url;
+  });
+
+  document.querySelectorAll('#adminQuestions .admin-item').forEach((item, i) => {
+    const q = adminData.questions[i];
+    if (!q) return;
+    q.Question = item.querySelector('.ad-q-text')?.value || q.Question;
+    q.QuizType = item.querySelector('.ad-q-type')?.value || q.QuizType;
+    q.Choices = (item.querySelector('.ad-q-choices')?.value || '').split('|').map(s => s.trim()).filter(Boolean);
+  });
+}
+
+async function saveAllData() {
+  collectAdminData();
+  const key = adminPassword || adminData.settings.AdminKey;
+  if (!key) { toast('กรุณาใส่ AdminKey'); return; }
+  els.adminSaveBtn.disabled = true;
+  els.adminSaveBtn.textContent = 'กำลังบันทึก...';
+  try {
+    const res = await api('saveAll', { adminKey: key, data: adminData });
+    if (!res.ok) throw new Error(res.error || 'บันทึกไม่สำเร็จ');
+    state.course = JSON.parse(JSON.stringify(adminData));
+    renderCourseInfo();
+    await alertBox('&#x2705; บันทึกสำเร็จ', 'ข้อมูลทั้งหมดอัปเดตแล้ว', 'success');
+  } catch (e) {
+    await alertBox('&#x274C; ไม่สำเร็จ', e.message || 'ลองใหม่อีกครั้ง', 'error');
+  } finally {
+    els.adminSaveBtn.disabled = false;
+    els.adminSaveBtn.textContent = '&#x1F4BE; บันทึกข้อมูลทั้งหมด';
+  }
+}
+
+async function api(action, payload = {}) {
   return jsonp(API_URL, { action, payload });
 }
 
 function jsonp(url, data) {
   return new Promise((resolve, reject) => {
-    const callback = `microLearning_${Date.now()}_${Math.round(Math.random() * 10000)}`;
+    const callback = `ml_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`;
     const script = document.createElement('script');
     const params = new URLSearchParams({
       action: data.action,
       callback,
       payload: btoa(unescape(encodeURIComponent(JSON.stringify(data.payload || {}))))
-        .replace(/\+/g, '-')
-        .replace(/\//g, '_')
-        .replace(/=+$/, '')
+        .replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '')
     });
-
-    window[callback] = (response) => {
+    window[callback] = response => {
       cleanup();
       if (!response || response.ok === false) reject(new Error(response && response.error ? response.error : 'API error'));
       else resolve(response);
     };
-    script.onerror = () => {
-      cleanup();
-      reject(new Error('Cannot connect to Apps Script API'));
-    };
+    script.onerror = () => { cleanup(); reject(new Error('Cannot connect to API')); };
     script.src = `${url}?${params.toString()}`;
     document.body.appendChild(script);
-
-    function cleanup() {
-      delete window[callback];
-      script.remove();
-    }
-  }).catch((error) => {
-    toast(error.message);
-    throw error;
+    function cleanup() { delete window[callback]; script.remove(); }
   });
 }
 
@@ -339,15 +633,7 @@ function youtubeId(url) {
 
 function toast(message) {
   if (window.Swal) {
-    Swal.fire({
-      toast: true,
-      position: 'top-end',
-      icon: 'info',
-      title: message,
-      showConfirmButton: false,
-      timer: 2400,
-      timerProgressBar: true
-    });
+    Swal.fire({ toast: true, position: 'top-end', icon: 'info', title: message, showConfirmButton: false, timer: 2400, timerProgressBar: true });
     return;
   }
   els.toast.textContent = message;
@@ -358,11 +644,11 @@ function toast(message) {
 function alertBox(title, text, icon = 'info') {
   if (window.Swal) {
     return Swal.fire({
-      title,
-      text,
-      icon,
+      title, text, icon,
       confirmButtonText: 'ตกลง',
-      confirmButtonColor: '#1f6feb'
+      confirmButtonColor: '#6366f1',
+      background: '#1e1e2f',
+      color: '#e2e8f0'
     });
   }
   toast(`${title}: ${text}`);
@@ -371,48 +657,21 @@ function alertBox(title, text, icon = 'info') {
 
 async function withButtonLoading(button, loadingText, task) {
   if (!button) return task();
-  const originalText = button.textContent;
+  const original = button.textContent;
   button.disabled = true;
-  button.classList.add('is-loading');
-  button.textContent = loadingText;
-  try {
-    return await task();
-  } catch (error) {
-    await alertBox('ทำรายการไม่สำเร็จ', error.message || 'กรุณาลองใหม่อีกครั้ง', 'error');
-    return null;
+  button.innerHTML = `<span class="spinner"></span> ${loadingText}`;
+  try { return await task(); } catch (error) {
+    await alertBox('ไม่สำเร็จ', error.message || 'ลองใหม่อีกครั้ง', 'error');
   } finally {
     button.disabled = false;
-    button.classList.remove('is-loading');
-    button.textContent = originalText;
+    button.textContent = original;
   }
 }
 
 function escapeHtml(value) {
-  return String(value ?? '').replace(/[&<>"']/g, (s) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[s]));
+  return String(value ?? '').replace(/[&<>"']/g, s => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[s]));
 }
 
 function escapeAttr(value) {
   return escapeHtml(value).replace(/`/g, '&#96;');
-}
-
-function demoCourse() {
-  return {
-    ok: true,
-    settings: {
-      CourseTitle: 'ชุดการเรียนรู้ Micro Learning',
-      CourseDescription: 'เรียนสั้น เข้าใจง่าย วัดผลได้รายบุคคล',
-      TeacherName: 'ครูผู้สอน'
-    },
-    lessons: [
-      { LessonID: 'L001', Title: 'บทนำ', Description: 'ทำความเข้าใจภาพรวมและเป้าหมายการเรียนรู้', CoverImageUrl: 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=1200' }
-    ],
-    contents: [
-      { ContentID: 'C001', LessonID: 'L001', Type: 'text', Title: 'วัตถุประสงค์', Body: 'ผู้เรียนสามารถอธิบายแนวคิดหลักและทำกิจกรรมได้', Url: '', AttachmentUrl: '' },
-      { ContentID: 'C002', LessonID: 'L001', Type: 'youtube', Title: 'คลิปประกอบ', Body: 'ชมคลิปสั้นก่อนทำกิจกรรม', Url: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ', AttachmentUrl: '' }
-    ],
-    questions: [
-      { QuestionID: 'QPRE001', QuizType: 'pre', Question: 'Micro learning มีลักษณะอย่างไร', Choices: ['เรียนเป็นช่วงสั้นๆ', 'ต้องเรียนทั้งวัน'], Points: 1 },
-      { QuestionID: 'QPOST001', QuizType: 'post', Question: 'ควรเริ่มออกแบบบทเรียนจากอะไร', Choices: ['วัตถุประสงค์', 'สีพื้นหลัง'], Points: 1 }
-    ]
-  };
 }

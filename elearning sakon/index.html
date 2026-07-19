@@ -1,123 +1,149 @@
 <!doctype html>
 <html lang="th">
-  <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Micro Learning Template</title>
-    <link rel="stylesheet" href="style.css">
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-  </head>
-  <body>
-    <header class="topbar">
-      <div>
-        <p class="eyebrow">Micro Learning</p>
-        <h1 id="courseTitle">ชุดการเรียนรู้ออนไลน์</h1>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Micro Learning</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+</head>
+<body>
+
+  <div class="progress-bar" id="progressBar">
+    <div class="progress-step active" data-step="1">
+      <div class="step-circle">1</div>
+      <span>ลงทะเบียน</span>
+    </div>
+    <div class="progress-step" data-step="2">
+      <div class="step-circle">2</div>
+      <span>วัตถุประสงค์</span>
+    </div>
+    <div class="progress-step" data-step="3">
+      <div class="step-circle">3</div>
+      <span>ก่อนเรียน</span>
+    </div>
+    <div class="progress-step" data-step="4">
+      <div class="step-circle">4</div>
+      <span>เรียนรู้</span>
+    </div>
+    <div class="progress-step" data-step="5">
+      <div class="step-circle">5</div>
+      <span>หลังเรียน</span>
+    </div>
+    <div class="progress-step" data-step="6">
+      <div class="step-circle">6</div>
+      <span>ผลรายบุคคล</span>
+    </div>
+    <div class="progress-step" data-step="7">
+      <div class="step-circle">7</div>
+      <span>ภาพรวม</span>
+    </div>
+    <button id="adminBtn" class="admin-gear" title="จัดการข้อมูล">&#x2699;&#xFE0F;</button>
+  </div>
+
+  <main>
+
+    <section id="step1" class="step active">
+      <div class="hero">
+        <div class="hero-icon">&#x1F393;</div>
+        <p class="teacher" id="teacherName"></p>
+        <h1 id="courseTitle"></h1>
+        <p class="desc" id="courseDescription"></p>
       </div>
-      <nav class="top-actions" aria-label="เมนูหลัก">
-        <button class="icon-button" data-view="learn" title="บทเรียน">⌂</button>
-        <button class="icon-button" data-view="report" title="รายงานของฉัน">▣</button>
-        <button class="icon-button" data-view="admin" title="รายงานภาพรวม">≡</button>
-      </nav>
-    </header>
-
-    <main>
-      <section class="hero-band">
-        <div class="hero-copy">
-          <p id="teacherName">ครูผู้สอน</p>
-          <h2 id="courseDescription">เรียนสั้น เข้าใจง่าย วัดผลได้รายบุคคล</h2>
-        </div>
-        <form id="loginForm" class="login-panel">
-          <label>
-            ชื่อ-สกุล
-            <input id="fullName" name="fullName" autocomplete="name" required>
-          </label>
-          <label>
-            ศกร.ระดับตำบล
-            <input id="school" name="school" autocomplete="organization" placeholder="เช่น ศกร.ระดับตำบลบ้านใหม่" required>
-          </label>
-          <button type="submit">ลงชื่อเรียน</button>
-          <p id="loginStatus" class="muted"></p>
+      <div class="card">
+        <h2>&#x1F511; ลงทะเบียนเรียน</h2>
+        <form id="loginForm" autocomplete="off" onsubmit="return false;">
+          <div class="field">
+            <label for="fullName">&#x1F464; ชื่อ-สกุล</label>
+            <input id="fullName" name="fullName" placeholder="เช่น สมชาย ใจดี">
+          </div>
+          <div class="field">
+            <label for="classroom">&#x1F3EB; ห้องเรียน</label>
+            <input id="classroom" name="classroom" placeholder="เช่น ม.1/1 หรือ ป.6/2">
+          </div>
+          <button type="button" id="registerBtn" class="btn-primary btn-full">&#x1F680; ลงทะเบียนเรียน</button>
         </form>
-      </section>
+      </div>
+    </section>
 
-      <section id="learnView" class="view active">
-        <div class="toolbar">
-          <div>
-            <p class="eyebrow">Learning Path</p>
-            <h2>บทเรียนและกิจกรรม</h2>
-          </div>
-          <div class="segmented">
-            <button id="preQuizBtn">ก่อนเรียน</button>
-            <button id="postQuizBtn">หลังเรียน</button>
-          </div>
-        </div>
-        <div id="lessons" class="lesson-list"></div>
-      </section>
+    <section id="step2" class="step">
+      <div class="card">
+        <h2>&#x1F4D6; ชี้แจงวัตถุประสงค์การเรียนรู้</h2>
+        <div id="objectivesContent" class="objectives-box"></div>
+        <button id="objOkBtn" class="btn-primary">&#x1F44D; โอเค เริ่มเรียนได้</button>
+      </div>
+    </section>
 
-      <section id="quizView" class="view">
-        <div class="toolbar">
-          <div>
-            <p class="eyebrow" id="quizLabel">Quiz</p>
-            <h2 id="quizTitle">แบบทดสอบ</h2>
-          </div>
-          <button id="backToLearn" class="secondary">กลับบทเรียน</button>
-        </div>
-        <form id="quizForm" class="quiz-form"></form>
-      </section>
+    <section id="step3" class="step">
+      <div class="card">
+        <h2>&#x1F4DD; แบบทดสอบก่อนเรียน</h2>
+        <form id="preTestForm"></form>
+      </div>
+    </section>
 
-      <section id="reportView" class="view">
-        <div class="toolbar">
-          <div>
-            <p class="eyebrow">My Report</p>
-            <h2>รายงานผลรายบุคคล</h2>
-          </div>
-          <button id="exportMyPdf">Export PDF</button>
+    <section id="step4" class="step">
+      <div class="card">
+        <h2>&#x1F4DA; ห้องเรียนรู้</h2>
+        <div id="lessonContent"></div>
+        <div class="reflection">
+          <h3>&#x1F4AD; ช่องสะท้อนคิดการเรียนรู้</h3>
+          <textarea id="reflectionInput" rows="4" placeholder="บันทึกสิ่งที่ได้เรียนรู้จากบทเรียนนี้ (อย่างน้อย 20 ตัวอักษร)..."></textarea>
+          <div class="char-count"><span id="charCount">0</span>/20</div>
         </div>
-        <div id="myReport" class="report-grid"></div>
-      </section>
+        <button id="finishBtn" class="btn-primary btn-full">&#x2705; เรียนรู้เสร็จแล้ว</button>
+      </div>
+    </section>
 
-      <section id="adminView" class="view">
-        <div class="toolbar">
-          <div>
-            <p class="eyebrow">Overview</p>
-            <h2>รายงานภาพรวมทุกคน</h2>
-          </div>
-          <form id="adminForm" class="admin-key">
-            <input id="adminKey" placeholder="กรอกรหัสครูจากชีต Settings ช่อง AdminKey">
-            <button type="submit">ดูรายงาน</button>
-          </form>
-        </div>
-        <p class="helper-text">AdminKey คือรหัสสำหรับครูผู้สอน ใช้เปิดรายงานภาพรวมทุกคน ดูได้จาก Google Sheet แท็บ Settings แถว AdminKey</p>
-        <div id="overviewReport" class="report-grid"></div>
-        <button id="exportOverviewPdf" class="hidden">Export PDF ภาพรวม</button>
-      </section>
+    <section id="step5" class="step">
+      <div class="card">
+        <h2>&#x1F4CA; แบบทดสอบหลังเรียน</h2>
+        <form id="postTestForm"></form>
+      </div>
+    </section>
 
-      <section class="asset-guide" aria-labelledby="assetGuideTitle">
-        <div>
-          <p class="eyebrow">Image Sizes</p>
-          <h2 id="assetGuideTitle">ขนาดภาพที่แนะนำ</h2>
-        </div>
-        <div class="asset-grid">
-          <div class="asset-spec">
-            <strong>ภาพปกบทเรียน</strong>
-            <span>1200 x 700 px</span>
-            <p>ใส่ในชีต Lessons คอลัมน์ CoverImageUrl</p>
-          </div>
-          <div class="asset-spec">
-            <strong>ภาพประกอบเนื้อหา</strong>
-            <span>1200 x 675 px</span>
-            <p>ใส่ในชีต Contents โดย Type = image และใส่ลิงก์ใน Url</p>
-          </div>
-          <div class="asset-spec">
-            <strong>ภาพพื้นหลังหน้าแรก</strong>
-            <span>1400 x 800 px</span>
-            <p>แก้ในไฟล์ style.css ตรง .hero-copy background</p>
-          </div>
-        </div>
-      </section>
-    </main>
+    <section id="step6" class="step">
+      <div class="card">
+        <h2>&#x1F3C6; ประมวลผลการเรียนรู้รายบุคคล</h2>
+        <div id="myReport"></div>
+        <button id="overviewBtn" class="btn-outline btn-full">&#x1F4CA; ดูประมวลผลภาพรวม</button>
+      </div>
+    </section>
 
-    <div id="toast" role="status" aria-live="polite"></div>
-    <script src="app.js"></script>
-  </body>
+    <section id="step7" class="step">
+      <div class="card">
+        <h2>&#x1F4CB; ประมวลผลภาพรวม</h2>
+        <div id="overviewReport"></div>
+        <div class="step7-actions">
+          <button id="homeBtn" class="btn-outline">&#x1F3E0; กลับบ้านแรก</button>
+          <button id="restartBtn" class="btn-outline">&#x1F504; เริ่มเรียนใหม่</button>
+          <button id="exitBtn" class="btn-outline btn-danger">&#x1F6AA; ออกจากบทเรียน</button>
+        </div>
+      </div>
+    </section>
+
+    <section id="step8" class="step">
+      <div class="card">
+        <div class="admin-header">
+          <h2>&#x2699;&#xFE0F; จัดการข้อมูล</h2>
+          <button id="adminCloseBtn" class="btn-outline">&#x2716; ปิด</button>
+        </div>
+        <div class="admin-tabs">
+          <button class="admin-tab active" data-tab="settings">&#x2699;&#xFE0F; ตั้งค่า</button>
+          <button class="admin-tab" data-tab="lessons">&#x1F4DA; บทเรียน</button>
+          <button class="admin-tab" data-tab="contents">&#x1F4C4; เนื้อหา</button>
+          <button class="admin-tab" data-tab="questions">&#x2753; คำถาม</button>
+        </div>
+        <div id="adminSettings" class="admin-panel active"></div>
+        <div id="adminLessons" class="admin-panel"></div>
+        <div id="adminContents" class="admin-panel"></div>
+        <div id="adminQuestions" class="admin-panel"></div>
+        <button id="adminSaveBtn" class="btn-primary btn-full">&#x1F4BE; บันทึกข้อมูลทั้งหมด</button>
+      </div>
+    </section>
+
+  </main>
+
+  <div id="toast" role="status" aria-live="polite"></div>
+  <script src="app.js"></script>
+</body>
 </html>
