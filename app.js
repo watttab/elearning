@@ -13,10 +13,8 @@ document.addEventListener('DOMContentLoaded', init);
 async function init() {
   cacheEls();
   bindEvents();
-  try {
-    state.course = await api('course');
-  } catch (_) {}
-  if (!state.course) state.course = { settings: {}, lessons: [], contents: [], questions: [] };
+  state.course = await api('course');
+  if (!state.course || !state.course.ok) state.course = { settings: {}, lessons: [], contents: [], questions: [] };
   renderCourseInfo();
   applyTheme();
 }
@@ -441,8 +439,7 @@ async function openAdmin() {
     inputValidator: v => v ? null : 'กรุณากรอกรหัสผ่าน'
   });
   if (!isConfirmed || !pw) return;
-  let result;
-  try { result = await api('verifyAdmin', { adminKey: pw }); } catch (_) {}
+  const result = await api('verifyAdmin', { adminKey: pw });
   if (!result || !result.ok) {
     toast('รหัสผ่านไม่ถูกต้อง');
     return;
@@ -626,16 +623,14 @@ async function saveAllData() {
   if (!key) { toast('กรุณาใส่ AdminKey'); return; }
   els.adminSaveBtn.disabled = true;
   els.adminSaveBtn.textContent = 'กำลังบันทึก...';
-  try {
-    const res = await api('saveAll', { adminKey: key, data: adminData });
-    if (!res.ok) throw new Error(res.error || 'บันทึกไม่สำเร็จ');
+  const res = await api('saveAll', { adminKey: key, data: adminData });
+  if (res && res.ok) {
     state.course = JSON.parse(JSON.stringify(adminData));
     renderCourseInfo();
     applyTheme();
-  } catch (_) {} finally {
-    els.adminSaveBtn.disabled = false;
-    els.adminSaveBtn.textContent = '\u{1F4BE} บันทึกข้อมูลทั้งหมด';
   }
+  els.adminSaveBtn.disabled = false;
+  els.adminSaveBtn.textContent = '\u{1F4BE} บันทึกข้อมูลทั้งหมด';
 }
 
 async function api(action, payload = {}) {
@@ -654,10 +649,10 @@ function jsonp(url, data) {
     });
     window[callback] = response => {
       cleanup();
-      if (!response || response.ok === false) reject(new Error(response && response.error ? response.error : 'API error'));
-      else resolve(response);
+      resolve(response);
     };
-    script.onerror = () => { cleanup(); reject(new Error('Cannot connect to API')); };
+    script.onerror = () => { cleanup(); resolve({ ok: false, error: 'Cannot connect to API' }); };
+    setTimeout(() => { if (window[callback]) { cleanup(); resolve({ ok: false, error: 'Request timeout' }); } }, 10000);
     script.src = `${url}?${params.toString()}`;
     document.body.appendChild(script);
     function cleanup() { delete window[callback]; script.remove(); }
