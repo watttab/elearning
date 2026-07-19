@@ -501,6 +501,7 @@ function renderAdminSettings() {
   els.adminSettings.addEventListener('click', e => {
     const btn = e.target.closest('.theme-btn');
     if (!btn) return;
+    e.preventDefault();
     els.adminSettings.querySelectorAll('.theme-btn').forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
     adminData.settings.Theme = btn.dataset.theme;
@@ -624,12 +625,12 @@ async function saveAllData() {
     state.course = JSON.parse(JSON.stringify(adminData));
     renderCourseInfo();
     applyTheme();
-    await alertBox('&#x2705; บันทึกสำเร็จ', 'ข้อมูลทั้งหมดอัปเดตแล้ว', 'success');
+    toast('\u2705 บันทึกสำเร็จ', 'success');
   } catch (e) {
     toast('❌ ' + (e.message || 'บันทึกไม่สำเร็จ ลองใหม่อีกครั้ง'));
   } finally {
     els.adminSaveBtn.disabled = false;
-    els.adminSaveBtn.textContent = '&#x1F4BE; บันทึกข้อมูลทั้งหมด';
+    els.adminSaveBtn.textContent = '\u{1F4BE} บันทึกข้อมูลทั้งหมด';
   }
 }
 
