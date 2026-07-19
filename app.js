@@ -15,6 +15,7 @@ async function init() {
   bindEvents();
   state.course = await api('course');
   renderCourseInfo();
+  applyTheme();
 }
 
 function cacheEls() {
@@ -81,6 +82,11 @@ function renderCourseInfo() {
   els.courseDescription.textContent = s.CourseDescription || '';
   els.teacherName.textContent = s.TeacherName || '';
   document.title = s.CourseTitle || 'Micro Learning';
+}
+
+function applyTheme() {
+  const theme = state.course?.settings?.Theme || 'indigo';
+  document.body.className = 'theme-' + theme;
 }
 
 function goToStep(n) {
@@ -465,15 +471,40 @@ function renderAdminTabs() {
   renderAdminSettings();
 }
 
+const THEMES = [
+  { id: 'indigo', label: 'Indigo', color: '#6366f1' },
+  { id: 'emerald', label: 'Emerald', color: '#10b981' },
+  { id: 'violet', label: 'Violet', color: '#8b5cf6' },
+  { id: 'amber', label: 'Amber', color: '#f59e0b' },
+  { id: 'rose', label: 'Rose', color: '#f43f5e' }
+];
+
 function renderAdminSettings() {
   const s = adminData.settings;
+  const currentTheme = s.Theme || 'indigo';
   els.adminSettings.innerHTML = `
     <div class="field"><label>ชื่อรายวิชา</label><input id="adCourseTitle" value="${escapeAttr(s.CourseTitle || '')}"></div>
     <div class="field"><label>คำอธิบาย</label><input id="adCourseDesc" value="${escapeAttr(s.CourseDescription || '')}"></div>
     <div class="field"><label>ชื่อครู</label><input id="adTeacher" value="${escapeAttr(s.TeacherName || '')}"></div>
     <div class="field"><label>เกณฑ์ผ่าน (%)</label><input id="adPass" type="number" value="${s.PassPercent || 70}"></div>
     <div class="field"><label>AdminKey</label><input id="adAdminKey" value="${escapeAttr(s.AdminKey || '')}" readonly style="background:#f3f4f6;color:#6b7280"></div>
+    <div class="theme-picker">
+      <label>ธีมสี</label>
+      <div class="theme-options">
+        ${THEMES.map(t => `
+          <button class="theme-btn${t.id === currentTheme ? ' active' : ''}" data-theme="${t.id}" title="${t.label}" style="background:${t.color}"></button>
+        `).join('')}
+      </div>
+    </div>
   `;
+  els.adminSettings.querySelectorAll('.theme-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      els.adminSettings.querySelectorAll('.theme-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      adminData.settings.Theme = btn.dataset.theme;
+      document.body.className = 'theme-' + btn.dataset.theme;
+    });
+  });
 }
 
 function renderAdminLessons() {
@@ -591,6 +622,7 @@ async function saveAllData() {
     if (!res.ok) throw new Error(res.error || 'บันทึกไม่สำเร็จ');
     state.course = JSON.parse(JSON.stringify(adminData));
     renderCourseInfo();
+    applyTheme();
     await alertBox('&#x2705; บันทึกสำเร็จ', 'ข้อมูลทั้งหมดอัปเดตแล้ว', 'success');
   } catch (e) {
     await alertBox('&#x274C; ไม่สำเร็จ', e.message || 'ลองใหม่อีกครั้ง', 'error');

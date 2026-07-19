@@ -50,7 +50,8 @@ function setupTemplate() {
     ['CourseDescription', 'เรียนสั้น เข้าใจง่าย วัดผลได้รายบุคคล', 'คำอธิบายหน้าแรก'],
     ['TeacherName', 'ครูผู้สอน', 'ชื่อผู้สอน'],
     ['PassPercent', '70', 'เกณฑ์ผ่านแบบทดสอบหลังเรียน'],
-    ['AdminKey', Utilities.getUuid().slice(0, 8), 'ใช้ดูรายงานรวมแบบไม่เปิดเผยในเว็บ']
+    ['AdminKey', Utilities.getUuid().slice(0, 8), 'ใช้ดูรายงานรวมแบบไม่เปิดเผยในเว็บ'],
+    ['Theme', 'indigo', 'ธีมสี: indigo, emerald, violet, amber, rose']
   ]);
 
   rows_(SHEETS.LESSONS, [
