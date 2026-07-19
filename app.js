@@ -85,8 +85,12 @@ function renderCourseInfo() {
 }
 
 function applyTheme() {
-  const theme = state.course?.settings?.Theme || 'indigo';
+  const saved = localStorage.getItem('microTheme');
+  const theme = saved || state.course?.settings?.Theme || 'indigo';
   document.body.className = 'theme-' + theme;
+  if (!saved && state.course?.settings?.Theme) {
+    localStorage.setItem('microTheme', state.course.settings.Theme);
+  }
 }
 
 function goToStep(n) {
@@ -503,6 +507,7 @@ function renderAdminSettings() {
       els.adminSettings.querySelectorAll('.theme-btn').forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
       adminData.settings.Theme = btn.dataset.theme;
+      localStorage.setItem('microTheme', btn.dataset.theme);
       document.body.className = 'theme-' + btn.dataset.theme;
     });
   });
