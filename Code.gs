@@ -51,7 +51,7 @@ function setupTemplate() {
     ['TeacherName', 'ครูผู้สอน', 'ชื่อผู้สอน'],
     ['PassPercent', '70', 'เกณฑ์ผ่านแบบทดสอบหลังเรียน'],
     ['AdminKey', Utilities.getUuid().slice(0, 8), 'ใช้ดูรายงานรวมแบบไม่เปิดเผยในเว็บ'],
-    ['Theme', 'indigo', 'ธีมสี: indigo, emerald, violet, amber, rose']
+    ['Theme', 'indigo', 'ธีมสี: indigo, emerald, violet, amber, rose, minimal']
   ]);
 
   rows_(SHEETS.LESSONS, [

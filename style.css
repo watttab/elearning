@@ -92,6 +92,24 @@ body.theme-rose {
   --orange: #fbbf24;
 }
 
+body.theme-minimal {
+  --primary: #6366f1;
+  --primary-hover: #4f46e5;
+  --primary-light: #eef2ff;
+  --bg: #f8fafc;
+  --bg-card: #ffffff;
+  --bg-card-hover: #f1f5f9;
+  --text: #1e293b;
+  --text-secondary: #64748b;
+  --muted: #94a3b8;
+  --line: #e2e8f0;
+  --success: #10b981;
+  --blue: #3b82f6;
+  --purple: #8b5cf6;
+  --green: #10b981;
+  --orange: #f59e0b;
+}
+
 * {
   box-sizing: border-box;
   margin: 0;
@@ -841,6 +859,7 @@ tr:hover td { background: rgba(99,102,241,0.03); }
 .theme-btn[data-theme="violet"] { background: #8b5cf6; }
 .theme-btn[data-theme="amber"] { background: #f59e0b; }
 .theme-btn[data-theme="rose"] { background: #f43f5e; }
+.theme-btn[data-theme="minimal"] { background: #f8fafc; border-color: #cbd5e1; }
 
 /* Responsive */
 @media (max-width: 640px) {

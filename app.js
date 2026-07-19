@@ -476,7 +476,8 @@ const THEMES = [
   { id: 'emerald', label: 'Emerald', color: '#10b981' },
   { id: 'violet', label: 'Violet', color: '#8b5cf6' },
   { id: 'amber', label: 'Amber', color: '#f59e0b' },
-  { id: 'rose', label: 'Rose', color: '#f43f5e' }
+  { id: 'rose', label: 'Rose', color: '#f43f5e' },
+  { id: 'minimal', label: 'Minimal', color: '#f8fafc' }
 ];
 
 function renderAdminSettings() {
