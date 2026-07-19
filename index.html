@@ -1,84 +1,149 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="th">
-
 <head>
-  <base target="_top">
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
-  <title>Kalasin Learning T-Map</title>
-
-  <!-- CSS Libraries -->
-  <script src="https://cdn.tailwindcss.com"></script>
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
-    integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
-  <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-
-  <!-- Custom Styles (Split File) -->
-  <?!= include('Stylesheet'); ?>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Micro Learning</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </head>
+<body>
 
-<body class="text-gray-800 antialiased selection:bg-purple-200 selection:text-purple-900">
-
-
-  <!-- Fail-Safe Loading UI -->
-  <div id="root">
-    <div
-      style="height: 100vh; display: flex; flex-direction: column; justify-content: center; align-items: center; background-color: #f3f0ff;">
-      <div
-        style="width: 50px; height: 50px; border: 5px solid #ddd; border-top-color: #7c3aed; border-radius: 50%; animation: spin 1s linear infinite;">
-      </div>
-      <h2 style="margin-top: 20px; font-family: 'Sarabun', sans-serif; color: #4c1d95; font-weight: bold;">
-        กำลังโหลดข้อมูล...</h2>
-      <style>
-        @keyframes spin {
-          0% {
-            transform: rotate(0deg);
-          }
-
-          100% {
-            transform: rotate(360deg);
-          }
-        }
-      </style>
+  <div class="progress-bar" id="progressBar">
+    <div class="progress-step active" data-step="1">
+      <div class="step-circle">1</div>
+      <span>ลงทะเบียน</span>
     </div>
+    <div class="progress-step" data-step="2">
+      <div class="step-circle">2</div>
+      <span>วัตถุประสงค์</span>
+    </div>
+    <div class="progress-step" data-step="3">
+      <div class="step-circle">3</div>
+      <span>ก่อนเรียน</span>
+    </div>
+    <div class="progress-step" data-step="4">
+      <div class="step-circle">4</div>
+      <span>เรียนรู้</span>
+    </div>
+    <div class="progress-step" data-step="5">
+      <div class="step-circle">5</div>
+      <span>หลังเรียน</span>
+    </div>
+    <div class="progress-step" data-step="6">
+      <div class="step-circle">6</div>
+      <span>ผลรายบุคคล</span>
+    </div>
+    <div class="progress-step" data-step="7">
+      <div class="step-circle">7</div>
+      <span>ภาพรวม</span>
+    </div>
+    <button id="adminBtn" class="admin-gear" title="จัดการข้อมูล">&#x2699;&#xFE0F;</button>
   </div>
 
-  <!-- JS Libraries -->
-  <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
-  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
-  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
-    integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
-  <script src="https://unpkg.com/prop-types@15.8.1/prop-types.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/recharts@2.12.3/umd/Recharts.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <main>
 
-  <!-- Global Error Handler -->
-  <script>
-    // Global Error Boundary
-    window.onerror = function (msg, url, lineNo, columnNo, error) {
-      console.error("Global Error:", msg, error);
-      const root = document.getElementById('root');
-      if (root) {
-        root.innerHTML = '<div style="color:red;text-align:center;padding:50px;font-family:sans-serif;">' +
-          '<h2>เกิดข้อผิดพลาด (Global Error)</h2>' +
-          '<p>' + msg + '</p>' +
-          '<button onclick="window.location.reload()" style="margin-top:20px;padding:10px 20px;background:#7c3aed;color:white;border:none;border-radius:8px;cursor:pointer;">รีโหลดหน้าเว็บ</button>' +
-          '</div>';
-      }
-      return false;
-    };
-  </script>
+    <section id="step1" class="step active">
+      <div class="hero">
+        <div class="hero-icon">&#x1F393;</div>
+        <p class="teacher" id="teacherName"></p>
+        <h1 id="courseTitle"></h1>
+        <p class="desc" id="courseDescription"></p>
+      </div>
+      <div class="card">
+        <h2>&#x1F511; ลงทะเบียนเรียน</h2>
+        <form id="loginForm" autocomplete="off" onsubmit="return false;">
+          <div class="field">
+            <label for="fullName">&#x1F464; ชื่อ-สกุล</label>
+            <input id="fullName" name="fullName" placeholder="เช่น สมชาย ใจดี">
+          </div>
+          <div class="field">
+            <label for="classroom">&#x1F3EB; ห้องเรียน</label>
+            <input id="classroom" name="classroom" placeholder="เช่น ม.1/1 หรือ ป.6/2">
+          </div>
+          <button type="button" id="registerBtn" class="btn-primary btn-full">&#x1F680; ลงทะเบียนเรียน</button>
+        </form>
+      </div>
+    </section>
 
-  <!-- Application Logic (Split Files) -->
-  <!-- Include all modularized JS files in dependency order -->
-  <?!= include('JS_Components'); ?>
-  <?!= include('JS_AdminTab'); ?>
-  <?!= include('JS_MapTab'); ?>
-  <?!= include('JS_DashboardTab'); ?>
-  <?!= include('JS_LeaderboardTab'); ?>
-  <?!= include('JS_App'); ?>
+    <section id="step2" class="step">
+      <div class="card">
+        <h2>&#x1F4D6; ชี้แจงวัตถุประสงค์การเรียนรู้</h2>
+        <div id="objectivesContent" class="objectives-box"></div>
+        <button id="objOkBtn" class="btn-primary">&#x1F44D; โอเค เริ่มเรียนได้</button>
+      </div>
+    </section>
 
+    <section id="step3" class="step">
+      <div class="card">
+        <h2>&#x1F4DD; แบบทดสอบก่อนเรียน</h2>
+        <form id="preTestForm"></form>
+      </div>
+    </section>
+
+    <section id="step4" class="step">
+      <div class="card">
+        <h2>&#x1F4DA; ห้องเรียนรู้</h2>
+        <div id="lessonContent"></div>
+        <div class="reflection">
+          <h3>&#x1F4AD; ช่องสะท้อนคิดการเรียนรู้</h3>
+          <textarea id="reflectionInput" rows="4" placeholder="บันทึกสิ่งที่ได้เรียนรู้จากบทเรียนนี้ (อย่างน้อย 20 ตัวอักษร)..."></textarea>
+          <div class="char-count"><span id="charCount">0</span>/20</div>
+        </div>
+        <button id="finishBtn" class="btn-primary btn-full">&#x2705; เรียนรู้เสร็จแล้ว</button>
+      </div>
+    </section>
+
+    <section id="step5" class="step">
+      <div class="card">
+        <h2>&#x1F4CA; แบบทดสอบหลังเรียน</h2>
+        <form id="postTestForm"></form>
+      </div>
+    </section>
+
+    <section id="step6" class="step">
+      <div class="card">
+        <h2>&#x1F3C6; ประมวลผลการเรียนรู้รายบุคคล</h2>
+        <div id="myReport"></div>
+        <button id="overviewBtn" class="btn-outline btn-full">&#x1F4CA; ดูประมวลผลภาพรวม</button>
+      </div>
+    </section>
+
+    <section id="step7" class="step">
+      <div class="card">
+        <h2>&#x1F4CB; ประมวลผลภาพรวม</h2>
+        <div id="overviewReport"></div>
+        <div class="step7-actions">
+          <button id="homeBtn" class="btn-outline">&#x1F3E0; กลับบ้านแรก</button>
+          <button id="restartBtn" class="btn-outline">&#x1F504; เริ่มเรียนใหม่</button>
+          <button id="exitBtn" class="btn-outline btn-danger">&#x1F6AA; ออกจากบทเรียน</button>
+        </div>
+      </div>
+    </section>
+
+    <section id="step8" class="step">
+      <div class="card">
+        <div class="admin-header">
+          <h2>&#x2699;&#xFE0F; จัดการข้อมูล</h2>
+          <button id="adminCloseBtn" class="btn-outline">&#x2716; ปิด</button>
+        </div>
+        <div class="admin-tabs">
+          <button class="admin-tab active" data-tab="settings">&#x2699;&#xFE0F; ตั้งค่า</button>
+          <button class="admin-tab" data-tab="lessons">&#x1F4DA; บทเรียน</button>
+          <button class="admin-tab" data-tab="contents">&#x1F4C4; เนื้อหา</button>
+          <button class="admin-tab" data-tab="questions">&#x2753; คำถาม</button>
+        </div>
+        <div id="adminSettings" class="admin-panel active"></div>
+        <div id="adminLessons" class="admin-panel"></div>
+        <div id="adminContents" class="admin-panel"></div>
+        <div id="adminQuestions" class="admin-panel"></div>
+        <button id="adminSaveBtn" class="btn-primary btn-full">&#x1F4BE; บันทึกข้อมูลทั้งหมด</button>
+      </div>
+    </section>
+
+  </main>
+
+  <div id="toast" role="status" aria-live="polite"></div>
+  <script src="app.js"></script>
 </body>
-
 </html>
