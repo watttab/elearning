@@ -49,6 +49,7 @@ const i18n = {
     footerSub: 'พัฒนาเพื่อการศึกษาไทย 🇹🇭',
     qrTitle: 'QR Code สำหรับแชร์บทเรียน',
     btnCopyLink: 'คัดลอกลิงก์',
+    btnExportPDF: 'ดาวน์โหลด PDF',
     btnSubmitAnswers: '✏️ ส่งคำตอบ',
     toastFillNameRoom: 'กรุณากรอกชื่อ-สกุล และห้องเรียน',
     toastLoading: 'กำลังโหลดข้อมูล กรุณารอสักครู่',
@@ -168,6 +169,7 @@ const i18n = {
     footerSub: 'Developed for Thai Education 🇹🇭',
     qrTitle: 'QR Code for Sharing',
     btnCopyLink: 'Copy Link',
+    btnExportPDF: 'Download PDF',
     btnSubmitAnswers: '✏️ Submit Answers',
     toastFillNameRoom: 'Please enter your name and classroom',
     toastLoading: 'Loading data, please wait...',
@@ -1190,3 +1192,26 @@ function copyUrl() {
     toast(t('copied'));
   });
 }
+
+window.exportToPDF = function(elementId, filename) {
+  const element = document.getElementById(elementId);
+  if (!element) return;
+  
+  // Create a clone to fix styling issues during PDF generation if needed
+  const opt = {
+    margin:       10,
+    filename:     filename + '.pdf',
+    image:        { type: 'jpeg', quality: 0.98 },
+    html2canvas:  { scale: 2, useCORS: true, backgroundColor: document.documentElement.getAttribute('data-theme') === 'dark' ? '#1e1e37' : '#ffffff' },
+    jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+  };
+  
+  toast(t('loadingData') || 'Generating PDF...');
+  
+  if (window.html2pdf) {
+    html2pdf().set(opt).from(element).save();
+  } else {
+    toast('PDF Library not loaded', 'error');
+  }
+};
+
