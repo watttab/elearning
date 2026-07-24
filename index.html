@@ -1,0 +1,308 @@
+<!doctype html>
+<html lang="th" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="ระบบ Micro Learning - เรียนสั้น เข้าใจง่าย วัดผลได้รายบุคคล | Micro Learning System">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎓</text></svg>">
+  <title>Micro Learning</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Prompt:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.4/build/qrcode.min.js"></script>
+</head>
+<body>
+
+  <!-- Animated Background -->
+  <div class="bg-animated">
+    <div class="bg-orb bg-orb-1"></div>
+    <div class="bg-orb bg-orb-2"></div>
+    <div class="bg-orb bg-orb-3"></div>
+  </div>
+
+  <!-- Top Navigation Bar -->
+  <nav class="top-bar" id="topBar">
+    <div class="top-bar-left">
+      <span class="brand-icon">🎓</span>
+      <span class="brand-name" data-i18n="brandName">Micro Learning</span>
+    </div>
+    <div class="top-bar-right">
+      <button id="qrBtn" class="icon-btn" title="QR Code" aria-label="QR Code">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="3" height="3"/><line x1="20" y1="14" x2="20" y2="20"/><line x1="14" y1="20" x2="20" y2="20"/></svg>
+      </button>
+      <button id="langBtn" class="icon-btn lang-toggle" title="เปลี่ยนภาษา" aria-label="Toggle Language">
+        <span id="langLabel">EN</span>
+      </button>
+      <button id="themeBtn" class="icon-btn theme-toggle" title="เปลี่ยนธีม" aria-label="Toggle Theme">
+        <span id="themeIcon">☀️</span>
+      </button>
+      <button id="adminBtn" class="icon-btn admin-gear" title="จัดการข้อมูล" aria-label="Admin">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+      </button>
+    </div>
+  </nav>
+
+  <!-- Progress Bar -->
+  <div class="progress-bar" id="progressBar">
+    <div class="progress-track">
+      <div class="progress-fill" id="progressFill"></div>
+    </div>
+    <div class="progress-steps">
+      <div class="progress-step active" data-step="1">
+        <div class="step-circle">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/></svg>
+        </div>
+        <span data-i18n="step1">ลงทะเบียน</span>
+      </div>
+      <div class="progress-step" data-step="2">
+        <div class="step-circle">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+        </div>
+        <span data-i18n="step2">วัตถุประสงค์</span>
+      </div>
+      <div class="progress-step" data-step="3">
+        <div class="step-circle">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+        </div>
+        <span data-i18n="step3">ก่อนเรียน</span>
+      </div>
+      <div class="progress-step" data-step="4">
+        <div class="step-circle">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>
+        </div>
+        <span data-i18n="step4">เรียนรู้</span>
+      </div>
+      <div class="progress-step" data-step="5">
+        <div class="step-circle">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+        </div>
+        <span data-i18n="step5">หลังเรียน</span>
+      </div>
+      <div class="progress-step" data-step="6">
+        <div class="step-circle">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 20V10"/><path d="M18 20V4"/><path d="M6 20v-4"/></svg>
+        </div>
+        <span data-i18n="step6">ผลรายบุคคล</span>
+      </div>
+      <div class="progress-step" data-step="7">
+        <div class="step-circle">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+        </div>
+        <span data-i18n="step7">ภาพรวม</span>
+      </div>
+    </div>
+  </div>
+
+  <main>
+
+    <!-- Step 1: Registration -->
+    <section id="step1" class="step active">
+      <div class="hero">
+        <div class="hero-icon">🎓</div>
+        <p class="teacher" id="teacherName"></p>
+        <h1 id="courseTitle"></h1>
+        <p class="desc" id="courseDescription"></p>
+      </div>
+      <div class="card glass-card">
+        <div class="card-header">
+          <div class="card-icon">🔑</div>
+          <h2 data-i18n="registerTitle">ลงทะเบียนเรียน</h2>
+        </div>
+        <form id="loginForm" autocomplete="off" onsubmit="return false;">
+          <div class="field">
+            <label for="fullName">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+              <span data-i18n="labelName">ชื่อ-สกุล</span>
+            </label>
+            <input id="fullName" name="fullName" data-i18n-placeholder="placeholderName" placeholder="เช่น สมชาย ใจดี">
+          </div>
+          <div class="field">
+            <label for="classroom">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+              <span data-i18n="labelClassroom">ห้องเรียน</span>
+            </label>
+            <input id="classroom" name="classroom" data-i18n-placeholder="placeholderClassroom" placeholder="เช่น ม.1/1 หรือ ป.6/2">
+          </div>
+          <button type="button" id="registerBtn" class="btn-primary btn-full btn-glow">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
+            <span data-i18n="btnRegister">ลงทะเบียนเรียน</span>
+          </button>
+        </form>
+      </div>
+    </section>
+
+    <!-- Step 2: Objectives -->
+    <section id="step2" class="step">
+      <div class="card glass-card">
+        <div class="card-header">
+          <div class="card-icon">📖</div>
+          <h2 data-i18n="objectivesTitle">ชี้แจงวัตถุประสงค์การเรียนรู้</h2>
+        </div>
+        <div id="objectivesContent" class="objectives-box"></div>
+        <button id="objOkBtn" class="btn-primary btn-glow">
+          <span>👍</span>
+          <span data-i18n="btnStartLearning">โอเค เริ่มเรียนได้</span>
+        </button>
+      </div>
+    </section>
+
+    <!-- Step 3: Pre-Test -->
+    <section id="step3" class="step">
+      <div class="card glass-card">
+        <div class="card-header">
+          <div class="card-icon">📝</div>
+          <h2 data-i18n="preTestTitle">แบบทดสอบก่อนเรียน</h2>
+        </div>
+        <div id="quizTimerPre" class="quiz-timer" style="display:none">
+          <div class="timer-ring">
+            <svg viewBox="0 0 100 100"><circle class="timer-bg" cx="50" cy="50" r="45"/><circle class="timer-progress" cx="50" cy="50" r="45"/></svg>
+            <span class="timer-text">00:00</span>
+          </div>
+        </div>
+        <form id="preTestForm"></form>
+      </div>
+    </section>
+
+    <!-- Step 4: Learning Room -->
+    <section id="step4" class="step">
+      <div class="card glass-card">
+        <div class="card-header">
+          <div class="card-icon">📚</div>
+          <h2 data-i18n="learningTitle">ห้องเรียนรู้</h2>
+        </div>
+        <div id="lessonContent"></div>
+        <div class="reflection">
+          <div class="reflection-header">
+            <span class="reflection-icon">💭</span>
+            <h3 data-i18n="reflectionTitle">ช่องสะท้อนคิดการเรียนรู้</h3>
+          </div>
+          <textarea id="reflectionInput" rows="4" data-i18n-placeholder="placeholderReflection" placeholder="บันทึกสิ่งที่ได้เรียนรู้จากบทเรียนนี้ (อย่างน้อย 20 ตัวอักษร)..."></textarea>
+          <div class="char-count"><span id="charCount">0</span>/20</div>
+        </div>
+        <button id="finishBtn" class="btn-primary btn-full btn-glow">
+          <span>✅</span>
+          <span data-i18n="btnFinishLearning">เรียนรู้เสร็จแล้ว</span>
+        </button>
+      </div>
+    </section>
+
+    <!-- Step 5: Post-Test -->
+    <section id="step5" class="step">
+      <div class="card glass-card">
+        <div class="card-header">
+          <div class="card-icon">📊</div>
+          <h2 data-i18n="postTestTitle">แบบทดสอบหลังเรียน</h2>
+        </div>
+        <div id="quizTimerPost" class="quiz-timer" style="display:none">
+          <div class="timer-ring">
+            <svg viewBox="0 0 100 100"><circle class="timer-bg" cx="50" cy="50" r="45"/><circle class="timer-progress" cx="50" cy="50" r="45"/></svg>
+            <span class="timer-text">00:00</span>
+          </div>
+        </div>
+        <form id="postTestForm"></form>
+      </div>
+    </section>
+
+    <!-- Step 6: Individual Report -->
+    <section id="step6" class="step">
+      <div class="card glass-card">
+        <div class="card-header">
+          <div class="card-icon">🏆</div>
+          <h2 data-i18n="individualReportTitle">ประมวลผลการเรียนรู้รายบุคคล</h2>
+        </div>
+        <div id="myReport"></div>
+        <button id="overviewBtn" class="btn-outline btn-full">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+          <span data-i18n="btnViewOverview">ดูประมวลผลภาพรวม</span>
+        </button>
+      </div>
+    </section>
+
+    <!-- Step 7: Overview Report -->
+    <section id="step7" class="step">
+      <div class="card glass-card">
+        <div class="card-header">
+          <div class="card-icon">📋</div>
+          <h2 data-i18n="overviewReportTitle">ประมวลผลภาพรวม</h2>
+        </div>
+        <div id="overviewReport"></div>
+        <div class="step7-actions">
+          <button id="homeBtn" class="btn-outline">
+            <span>🏠</span>
+            <span data-i18n="btnHome">กลับบ้านแรก</span>
+          </button>
+          <button id="restartBtn" class="btn-outline">
+            <span>🔄</span>
+            <span data-i18n="btnRestart">เริ่มเรียนใหม่</span>
+          </button>
+          <button id="exitBtn" class="btn-outline btn-danger">
+            <span>🚪</span>
+            <span data-i18n="btnExit">ออกจากบทเรียน</span>
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Step 8: Admin Panel -->
+    <section id="step8" class="step">
+      <div class="card glass-card">
+        <div class="admin-header">
+          <div class="card-header">
+            <div class="card-icon">⚙️</div>
+            <h2 data-i18n="adminTitle">จัดการข้อมูล</h2>
+          </div>
+          <button id="adminCloseBtn" class="btn-outline btn-sm">
+            <span>✖</span>
+            <span data-i18n="btnClose">ปิด</span>
+          </button>
+        </div>
+        <div class="admin-tabs">
+          <button class="admin-tab active" data-tab="settings">⚙️ <span data-i18n="tabSettings">ตั้งค่า</span></button>
+          <button class="admin-tab" data-tab="lessons">📚 <span data-i18n="tabLessons">บทเรียน</span></button>
+          <button class="admin-tab" data-tab="contents">📄 <span data-i18n="tabContents">เนื้อหา</span></button>
+          <button class="admin-tab" data-tab="questions">❓ <span data-i18n="tabQuestions">คำถาม</span></button>
+        </div>
+        <div id="adminSettings" class="admin-panel active"></div>
+        <div id="adminLessons" class="admin-panel"></div>
+        <div id="adminContents" class="admin-panel"></div>
+        <div id="adminQuestions" class="admin-panel"></div>
+        <button id="adminSaveBtn" class="btn-primary btn-full btn-glow">
+          <span>💾</span>
+          <span data-i18n="btnSaveAll">บันทึกข้อมูลทั้งหมด</span>
+        </button>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Footer -->
+  <footer class="site-footer">
+    <div class="footer-content">
+      <p data-i18n="footerText">ระบบ Micro Learning — เรียนสั้น เข้าใจง่าย วัดผลได้</p>
+      <p class="footer-sub" data-i18n="footerSub">พัฒนาเพื่อการศึกษาไทย 🇹🇭</p>
+    </div>
+  </footer>
+
+  <!-- QR Code Modal -->
+  <div id="qrModal" class="modal-overlay">
+    <div class="modal-card glass-card">
+      <div class="modal-header">
+        <h3 data-i18n="qrTitle">QR Code สำหรับแชร์บทเรียน</h3>
+        <button id="qrCloseBtn" class="icon-btn">&times;</button>
+      </div>
+      <div class="qr-canvas"><canvas id="qrCanvas"></canvas></div>
+      <p class="qr-url" id="qrUrl"></p>
+      <button id="qrCopyBtn" class="btn-outline btn-full">
+        <span>📋</span>
+        <span data-i18n="btnCopyLink">คัดลอกลิงก์</span>
+      </button>
+    </div>
+  </div>
+
+  <div id="toast" role="status" aria-live="polite"></div>
+  <script src="app.js"></script>
+</body>
+</html>
